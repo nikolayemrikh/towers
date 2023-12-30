@@ -1,24 +1,38 @@
-import { Route, Router, useNavigate } from '@solidjs/router';
+import { A, Navigate, Route, Router, useNavigate } from '@solidjs/router';
 import { Board } from './Board';
-import { createSignal } from 'solid-js';
+import { createEffect, createResource, createSignal, onMount } from 'solid-js';
+import { supabase } from './supabaseClient'
+import { SignUpPage } from './Auth/SignUpPage';
+import { SignInPage } from './Auth/SignInPage';
+import { Lobby } from './Lobby';
+import { AuthRoot } from './Auth/AuthRoot';
 
-const Root = () => {
-  const [username, setUsername] = createSignal('');
-  const navigate = useNavigate();  
-  
-  return <form onSubmit={() => navigate(`/game/${username()}`)}>
-    <input onChange={(evt) => setUsername(evt.target.value)} />
-    <button type="submit">start</button>
-  </form>;
+const AuthRoutes = () => {
+  return (
+    <Router>
+      <Route path="/" component={AuthRoot} />
+      <Route path="/sign-in" component={SignInPage} />
+      <Route path="/sign-up" component={SignUpPage} />
+    </Router>
+  )
 }
 
 const App = () => {
-  return (
-    <Router>
-      <Route path="/" component={Root} />
-      <Route path="/game/:username" component={Board} />
-    </Router>
-  )
+  const [isAuthenticated, setIsAuthenticated] = createSignal(false);
+
+  onMount(() => {
+    const checkAuthenticated = async () => {
+      const session = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    }
+    checkAuthenticated();
+  
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+  });
+
+  return <div>{isAuthenticated() ? <Lobby /> : <AuthRoutes />}</div>;
 }
 
 export default App

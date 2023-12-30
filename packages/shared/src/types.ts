@@ -9,9 +9,10 @@ export interface IDeck {
 
 export interface IBoard {
   decks: Record<string, IDeck>;
-  cardToChange: ICard | null;
+  pulledCardToChange: ICard | null;
   openCards: ICard[];
-  openCardToUse: ICard | null;
+  openedCardToUse: ICard | null;
+  turn: string;
 }
 
 export interface IGameLobby {
@@ -23,7 +24,6 @@ export interface IGameLobby {
 export interface IGamePlaying {
   state: EGameState.PLAYING;
   board: IBoard;
-  turn: string;
 }
 
 export interface IGameFinished {
