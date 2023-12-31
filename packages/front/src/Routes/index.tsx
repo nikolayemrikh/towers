@@ -4,6 +4,7 @@ import { SignUpPage } from '../Auth/SignUpPage';
 import { SignInPage } from '../Auth/SignInPage';
 import { Lobby } from '../Lobby';
 import { AuthContext } from '../context/AuthContext';
+import { Board } from '../Board';
 
 
 const DetectRoute = () => {
@@ -31,6 +32,7 @@ export const Routes = () => {
     <Router>
       <Route component={AuthRoute}>
         <Route path="/lobby" component={Lobby} />
+        <Route path="/board/:id" component={Board} />
       </Route>
       <Route component={NotAuthenticatedRoute}>
         <Route path="/sign-in" component={SignInPage} />
