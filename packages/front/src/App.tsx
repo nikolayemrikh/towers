@@ -1,8 +1,7 @@
-import { createContext, createSignal, onMount } from 'solid-js';
+import { createSignal, onMount } from 'solid-js';
 import { supabase } from './supabaseClient'
 import { Routes } from './Routes';
-
-export const AuthContext = createContext<{isAuthenticated: () => boolean}>({isAuthenticated: () => false});
+import { AuthContext } from './context/AuthContext';
 
 const App = () => {
   const [isInitialized, setIsInitialized] = createSignal(false);
