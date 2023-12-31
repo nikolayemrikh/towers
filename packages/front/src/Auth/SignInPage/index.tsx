@@ -4,7 +4,7 @@ import { A } from '@solidjs/router';
 
 export const SignInPage = () => {
   const [email, setEmail] = createSignal('');
-  const [password, setPassword] = createSignal('');
+  const [password, setPassword] = createSignal('');  
 
   const signIn = async () => {
     const { error } = await supabase.auth.signInWithPassword({
