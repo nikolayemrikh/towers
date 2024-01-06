@@ -1,12 +1,13 @@
 import { useNavigate } from '@solidjs/router'
 import { supabase } from '../supabaseClient'
 import { createMemo, createResource } from 'solid-js'
+import { UserBoards } from './UserBoards';
 
 export const Lobby = () => {
   const navigate = useNavigate();
   const fetchUser = async () => {
     const { data } = await supabase.auth.getUser();
-    return data.user;
+    return data.user!;
   }
   const [user] = createResource(fetchUser);
   const fetchUsersInLobby = async () => {
@@ -45,6 +46,10 @@ export const Lobby = () => {
         navigate(`/board/${data.newBoard.id}`)
       }
     }}>Start game</button>}</div>
+    <div>
+      <h2>Your boards</h2>
+      <UserBoards user={user} />
+    </div>
     <button onClick={() => supabase.auth.signOut()}>log out</button>
   </main>
 }
