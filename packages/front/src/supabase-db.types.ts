@@ -15,21 +15,21 @@ export interface Database {
           id: number
           opened_card_number_to_use: number | null
           pulled_card_number_to_change: number | null
-          turn_user_id: string
+          turn_user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: number
           opened_card_number_to_use?: number | null
           pulled_card_number_to_change?: number | null
-          turn_user_id: string
+          turn_user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: number
           opened_card_number_to_use?: number | null
           pulled_card_number_to_change?: number | null
-          turn_user_id?: string
+          turn_user_id?: string | null
         }
         Relationships: [
           {
