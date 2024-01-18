@@ -2,6 +2,7 @@ import { useParams } from '@solidjs/router';
 import { Tower } from './Tower'
 import { supabase } from '../supabaseClient';
 import { For, createEffect, createResource } from 'solid-js';
+import { fetchCardVariants } from './fetchers/fetchCardVariants';
 
 
 const fetchBoard = async (boardId: number) => {
@@ -34,14 +35,10 @@ const fetchBoard = async (boardId: number) => {
   };
 }
 
-// const fetchCardTowers = async (boardId: number) => {
-//   const { data } = await supabase.from('card_tower').select('id, created_at, user_id').eq('board_id', boardId)
-//   return data;
-// }
-
 export const Board = () => {
   const { id } = useParams();
 
+  const [cardVariants] = createResource(() => fetchCardVariants());
   const [board, {refetch: refetchBoard}] = createResource(() => fetchBoard(Number(id)));
   // const [cardTower, {refetch: refetchCardTowers}] = createResource(() => fetchCardTowers(Number(id)));
   createEffect(() => {
@@ -52,11 +49,9 @@ export const Board = () => {
   return <div style={{height: '100%', padding: '16px'}}>
     {/* Decks horizontal list */}
     <div style={{display: 'flex', "flex-direction": "row", "justify-content": "space-between", "padding-left": "8px", "padding-right": "8px"}}>
-      {board()?.cardTowers && (
-        <For each={Object.entries(board()?.cardTowers ?? {})}>{([userId, cardTower], idx) => (
-          <Tower id={cardTower.id} userId={userId} cards={cardTower.cards} />
-        )}</For>
-      )}
+      <For each={Object.entries(board()?.cardTowers ?? {})}>{([userId, cardTower]) => (
+        <Tower id={cardTower.id} userId={userId} cards={cardTower.cards} cardVariants={cardVariants} />
+      )}</For>
     </div>
   </div>
 }
