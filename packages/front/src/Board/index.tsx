@@ -1,12 +1,10 @@
 import { useParams } from '@solidjs/router';
 import { Tower } from './Tower'
-import { supabase } from '../supabaseClient';
-import { For, Match, Switch, createEffect, createResource } from 'solid-js';
+import { For, Match, Switch, createResource } from 'solid-js';
 import { fetchCardVariants } from './fetchers/fetchCardVariants';
 import { createQuery } from '@tanstack/solid-query';
 import { createGraphQLClient } from '../core/graphql/createGraphQLClient';
 import { boardQueryDocument } from './graphql-documents/boardQueryDocument';
-import { BoardCollectionQuery } from '@front/__generated__/graphql/graphql';
 
 
 // const fetchBoard = async (boardId: number) => {
@@ -55,13 +53,7 @@ export const Board = () => {
   const { id } = useParams();
 
   const [cardVariants] = createResource(() => fetchCardVariants());
-  // const [board, {refetch: refetchBoard}] = createResource(() => fetchBoard(Number(id)));
   const boardQuery = createBoardQuery(id)
-  // const [cardTower, {refetch: refetchCardTowers}] = createResource(() => fetchCardTowers(Number(id)));
-  // createEffect(() => {
-  //   console.log(board.data);
-  // });
-  
   
   return <div style={{height: '100%', padding: '16px'}}>
     {/* Decks horizontal list */}
