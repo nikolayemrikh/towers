@@ -12,8 +12,8 @@ export const createGraphQLClient = (): GraphQLClient => {
         ...req,
         headers: {
           ...req.headers,
-          Authorization: `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       };
     },
   });

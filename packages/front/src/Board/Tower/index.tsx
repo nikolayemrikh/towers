@@ -26,7 +26,7 @@ export const Tower = (props: {
     <For each={props.cards}>{(card) => {
       const cardVariants = props.cardVariants();
       return (
-        <div>card {card.node.card_number} {cardVariants ? PowerTitle[cardVariants.get(card.node.card_number)!] : null}</div>
+        <div>card {card.node.card_number} ({cardVariants ? PowerTitle[cardVariants.get(card.node.card_number)!] : null})</div>
       )
     }}</For>
   </div>
