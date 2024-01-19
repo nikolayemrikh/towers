@@ -1,5 +1,6 @@
 import { For, Resource } from 'solid-js';
 import { TCardPower, TCardVariants } from '../fetchers/fetchCardVariants/types';
+import { BoardCollectionQuery } from '@front/__generated__/graphql/graphql';
 
 const PowerTitle: Record<TCardPower, string> = {
   Move_down_by_two: 'Move down by two',
@@ -12,17 +13,20 @@ const PowerTitle: Record<TCardPower, string> = {
   Swap_through_one: 'Swap through one',
 }
 
+type TN<T> = NonNullable<T>;
+type TCards = TN<TN<TN<TN<TN<BoardCollectionQuery['boardCollection']>['edges']>[0]['node']['card_towerCollection']>['edges']>[0]['node']['card_in_towerCollection']>['edges'];
+
 export const Tower = (props: {
-  id: number;
+  id: string;
   userId: string;
-  cards: {id: number; card_number: number;}[]
+  cards: TCards
   cardVariants: Resource<TCardVariants>;
 }) => {
   return <div style={{display: 'flex', "flex-direction": 'column'}}>
     <For each={props.cards}>{(card) => {
       const cardVariants = props.cardVariants();
       return (
-        <div>card {card.card_number} {cardVariants ? PowerTitle[cardVariants.get(card.card_number)!] : null}</div>
+        <div>card {card.node.card_number} {cardVariants ? PowerTitle[cardVariants.get(card.node.card_number)!] : null}</div>
       )
     }}</For>
   </div>

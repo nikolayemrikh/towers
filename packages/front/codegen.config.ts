@@ -6,7 +6,7 @@ const config: CodegenConfig = {
   generates: {
     'src/__generated__/graphql/': {
       schema: 'http://localhost:54321/graphql/v1', // Using the local endpoint, update if needed
-      documents: 'src/**/*.tsx',
+      documents: 'src/**/*.{ts,tsx}',
       preset: 'client',
       documentTransforms: [addTypenameSelectionDocumentTransform],
       plugins: [],
