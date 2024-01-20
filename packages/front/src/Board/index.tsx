@@ -1,11 +1,13 @@
 import { useParams } from '@solidjs/router';
 import { Tower } from './Tower'
-import { For, Match, Switch, createResource } from 'solid-js';
+import { For, Match, Switch, createEffect, createResource } from 'solid-js';
 import { fetchCardVariants } from './fetchers/fetchCardVariants';
 import { createQuery } from '@tanstack/solid-query';
 import { createGraphQLClient } from '../core/graphql/createGraphQLClient';
 import { boardQueryDocument } from './graphql-documents/boardQueryDocument';
 import { getGraphqlQueryKey } from '../core/graphql/createGetQueryKet';
+import { supabase } from '../supabaseClient';
+import { cardVariantsQueryDocument } from './graphql-documents/cardVariantsQueryDocument';
 
 
 // const fetchBoard = async (boardId: number) => {
@@ -43,10 +45,16 @@ const graphqlClient = createGraphQLClient();
 const createBoardQuery = (boardId: string) => {
   return createQuery(() => ({
     queryKey: [getGraphqlQueryKey(boardQueryDocument), boardId],
-    queryFn: async () => {
-      const res = await graphqlClient.request(boardQueryDocument, { boardId })
-      return res.boardCollection;
-    }
+    queryFn: () => graphqlClient.request(boardQueryDocument, { boardId }),
+    select: (res) => res.boardCollection,
+  }))
+}
+
+const createCarvVariantsQuery = () => {
+  return createQuery(() => ({
+    queryKey: [getGraphqlQueryKey(cardVariantsQueryDocument)],
+    queryFn: () => graphqlClient.request(cardVariantsQueryDocument),
+    select: (res) => new Map(res.card_variantCollection!.edges.map(({node}) => [node.number, node.power])),
   }))
 }
 
@@ -54,20 +62,29 @@ export const Board = () => {
   const { id } = useParams();
 
   const [cardVariants] = createResource(() => fetchCardVariants());
-  const boardQuery = createBoardQuery(id)
-  
+  // const cardVariantsQuery = createCarvVariantsQuery();
+  const boardQuery = createBoardQuery(id);
+
   return <div style={{height: '100%', padding: '16px'}}>
-    {/* Decks horizontal list */}
-    <div style={{display: 'flex', "flex-direction": "row", "justify-content": "space-between", "padding-left": "8px", "padding-right": "8px"}}>
-      <Switch>
-        <Match when={boardQuery.isPending}>Loading...</Match>
-        <Match when={boardQuery.isError}>Error: {boardQuery.error?.message}</Match>
-        <Match when={boardQuery.isSuccess}>
-          <For each={boardQuery.data?.edges[0].node.card_towerCollection?.edges}>{({node: tower}) => (
+    <Switch>
+      <Match when={boardQuery.isPending}>Loading...</Match>
+      <Match when={boardQuery.isError}>Error: {boardQuery.error?.message}</Match>
+      <Match when={boardQuery.isSuccess}>
+        {/* Decks horizontal list */}
+        <div style={{display: 'flex', "flex-direction": "row", "justify-content": "space-between", "padding-left": "8px", "padding-right": "8px"}}>
+          <For each={boardQuery.data!.edges[0].node.card_towerCollection?.edges}>{({node: tower}) => (
             <Tower id={tower.id} userId={tower.user_id} cards={tower.card_in_towerCollection?.edges || []} cardVariants={cardVariants} />
           )}</For>
-        </Match>
-      </Switch>
-    </div>
+        </div>
+        <div>
+          <div>Deck</div>
+          <button onClick={async () => {
+            await supabase.functions.invoke('pull-card', {body: {boardId: id}});
+          }}>pull card</button>
+          <div>Pulled card</div>
+          {boardQuery.data!.edges[0].node.pulled_card_number_to_change && <div>{cardVariants()?.get(boardQuery.data!.edges[0].node.pulled_card_number_to_change)}</div>}
+        </div>
+      </Match>
+    </Switch>
   </div>
 }
