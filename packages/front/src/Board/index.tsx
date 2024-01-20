@@ -5,7 +5,7 @@ import { fetchCardVariants } from './fetchers/fetchCardVariants';
 import { createQuery } from '@tanstack/solid-query';
 import { createGraphQLClient } from '../core/graphql/createGraphQLClient';
 import { boardQueryDocument } from './graphql-documents/boardQueryDocument';
-import { getGraphqlQueryKey } from '@front/core/graphql/createGetQueryKet';
+import { getGraphqlQueryKey } from '../core/graphql/createGetQueryKet';
 
 
 // const fetchBoard = async (boardId: number) => {
