@@ -115,7 +115,6 @@ export const Board = () => {
       power={cardVariants.get(board.pulled_card_number_to_change)!}
       isActionAvailable={false}
       isProtected={false}
-      onClick={() => {}}
     />
   }
 

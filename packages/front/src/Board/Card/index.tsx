@@ -16,11 +16,11 @@ export const Card = (props: {
   power: TCardPower;
   isActionAvailable: boolean;
   isProtected: boolean;
-  onClick: () => void;
+  onClick?: () => void;
 }) => {
   return (
     <div
-      onClick={() => props.onClick()}
+      onClick={() => props.onClick?.()}
       style={{
         display: 'flex',
         "flex-direction": 'column',
