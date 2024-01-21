@@ -105,6 +105,20 @@ export const Board = () => {
     )}</For>;
   }
 
+  const renderPulledCard = () => {
+    const board = boardQuery.data!.edges[0].node;
+    if (!board.pulled_card_number_to_change) return null;
+    const cardVariants = cardVariantsQuery.data;
+    if (!cardVariants) return null;
+    return <Card
+      number={board.pulled_card_number_to_change}
+      power={cardVariants.get(board.pulled_card_number_to_change)!}
+      isActionAvailable={false}
+      isProtected={false}
+      onClick={() => {}}
+    />
+  }
+
   return <div style={{height: '100%', padding: '16px'}}>
     <Switch>
       <Match when={boardQuery.isPending || userQuery.isPending || cardVariantsQuery.isPending}>Loading...</Match>
@@ -112,21 +126,9 @@ export const Board = () => {
       <Match when={boardQuery.isSuccess && boardQuery.isSuccess && cardVariantsQuery.isSuccess}>
         <div>
           <div>Deck</div>
-          <button onClick={async () => {
-            await supabase.functions.invoke('pull-card', {body: {boardId: id}});
-          }}>pull card</button>
+          <button onClick={() => supabase.functions.invoke('pull-card', {body: {boardId: id}})}>pull card</button>
           <div>Pulled card</div>
-          <Switch>
-            <Match when={boardQuery.data!.edges[0].node.pulled_card_number_to_change}>
-              <Card
-                number={boardQuery.data!.edges[0].node.pulled_card_number_to_change!}
-                power={cardVariantsQuery.data!.get(boardQuery.data!.edges[0].node.pulled_card_number_to_change!)!}
-                isActionAvailable={false}
-                isProtected={false}
-                onClick={() => {}}
-              />
-            </Match>
-          </Switch>
+          {renderPulledCard()}
         </div>
         <div>Towers</div>
         {/* Decks horizontal list */}
