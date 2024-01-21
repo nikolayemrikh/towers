@@ -9,6 +9,7 @@ import { getGraphqlQueryKey } from '../core/graphql/createGetQueryKet';
 import { supabase } from '../supabaseClient';
 import { cardVariantsQueryDocument } from './graphql-documents/cardVariantsQueryDocument';
 import { UserTower } from './UserTower';
+import { Card } from './Card';
 
 
 // const fetchBoard = async (boardId: number) => {
@@ -109,18 +110,29 @@ export const Board = () => {
       <Match when={boardQuery.isPending || userQuery.isPending || cardVariantsQuery.isPending}>Loading...</Match>
       <Match when={boardQuery.isError || userQuery.error || cardVariantsQuery.error}>Error</Match>
       <Match when={boardQuery.isSuccess && boardQuery.isSuccess && cardVariantsQuery.isSuccess}>
-        {/* Decks horizontal list */}
-        <div style={{display: 'flex', "flex-direction": "row", "justify-content": "space-between", "padding-left": "8px", "padding-right": "8px"}}>
-          {renderUserTower()}
-          {renderOtherUsersTowers()}
-        </div>
         <div>
           <div>Deck</div>
           <button onClick={async () => {
             await supabase.functions.invoke('pull-card', {body: {boardId: id}});
           }}>pull card</button>
           <div>Pulled card</div>
-          {boardQuery.data!.edges[0].node.pulled_card_number_to_change && <div>{cardVariantsQuery.data?.get(boardQuery.data!.edges[0].node.pulled_card_number_to_change)}</div>}
+          <Switch>
+            <Match when={boardQuery.data!.edges[0].node.pulled_card_number_to_change}>
+              <Card
+                number={boardQuery.data!.edges[0].node.pulled_card_number_to_change!}
+                power={cardVariantsQuery.data!.get(boardQuery.data!.edges[0].node.pulled_card_number_to_change!)!}
+                isActionAvailable={false}
+                isProtected={false}
+                onClick={() => {}}
+              />
+            </Match>
+          </Switch>
+        </div>
+        <div>Towers</div>
+        {/* Decks horizontal list */}
+        <div style={{display: 'flex', "flex-direction": "row", "justify-content": "space-between", "padding-left": "8px", "padding-right": "8px"}}>
+          {renderUserTower()}
+          {renderOtherUsersTowers()}
         </div>
       </Match>
     </Switch>

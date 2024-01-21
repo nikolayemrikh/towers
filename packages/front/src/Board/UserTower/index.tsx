@@ -1,7 +1,7 @@
 import { For, Resource, createSignal } from 'solid-js';
 import { TCardPower, TCardVariants } from '../fetchers/fetchCardVariants/types';
 import { BoardCollectionQuery } from '@front/__generated__/graphql/graphql';
-import { Card } from './Card';
+import { Card } from '../Card';
 
 const PowerTitle: Record<TCardPower, string> = {
   Move_down_by_two: 'Move down by two',
