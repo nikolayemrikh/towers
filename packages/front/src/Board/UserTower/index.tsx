@@ -17,12 +17,6 @@ const PowerTitle: Record<TCardPower, string> = {
 type TN<T> = NonNullable<T>;
 type TCards = TN<TN<TN<TN<TN<BoardCollectionQuery['boardCollection']>['edges']>[0]['node']['card_towerCollection']>['edges']>[0]['node']['card_in_towerCollection']>['edges'];
 
-enum ECardAction {
-  ReplaceWithPulledCard = 'ReplaceWithPulledCard',
-  UseOpenedCardStart = 'UseOpenedCardStart',
-  UseOpenedCardConfirm = 'UseOpenedCardConfirm',
-}
-
 export const UserTower = (props: {
   id: string;
   userId: string;

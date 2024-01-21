@@ -21,6 +21,7 @@ export const boardQueryDocument = graphql(/* GraphQL */ `
                     node {
                       id
                       card_number
+                      is_protected
                     }
                   }
                 }
