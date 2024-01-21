@@ -20,13 +20,12 @@ export const Tower = (props: {
   id: string;
   userId: string;
   cards: TCards
-  cardVariants: Resource<TCardVariants>;
+  cardVariants: TCardVariants;
 }) => {
   return <div style={{display: 'flex', "flex-direction": 'column'}}>
     <For each={props.cards}>{(card) => {
-      const cardVariants = props.cardVariants();
       return (
-        <div>card {card.node.card_number} ({cardVariants ? PowerTitle[cardVariants.get(card.node.card_number)!] : null})</div>
+        <div>card {card.node.card_number} ({PowerTitle[props.cardVariants.get(card.node.card_number)!]})</div>
       )
     }}</For>
   </div>

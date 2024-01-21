@@ -8,6 +8,7 @@ import { boardQueryDocument } from './graphql-documents/boardQueryDocument';
 import { getGraphqlQueryKey } from '../core/graphql/createGetQueryKet';
 import { supabase } from '../supabaseClient';
 import { cardVariantsQueryDocument } from './graphql-documents/cardVariantsQueryDocument';
+import { UserTower } from './UserTower';
 
 
 // const fetchBoard = async (boardId: number) => {
@@ -50,31 +51,68 @@ const createBoardQuery = (boardId: string) => {
   }))
 }
 
-const createCarvVariantsQuery = () => {
+// const createCarvVariantsQuery = () => {
+//   return createQuery(() => ({
+//     queryKey: [getGraphqlQueryKey(cardVariantsQueryDocument)],
+//     queryFn: () => graphqlClient.request(cardVariantsQueryDocument),
+//     select: (res) => new Map(res.card_variantCollection!.edges.map(({node}) => [node.number, node.power])),
+//   }))
+// }
+
+const createCardVariantsQuery = () => {
   return createQuery(() => ({
-    queryKey: [getGraphqlQueryKey(cardVariantsQueryDocument)],
-    queryFn: () => graphqlClient.request(cardVariantsQueryDocument),
-    select: (res) => new Map(res.card_variantCollection!.edges.map(({node}) => [node.number, node.power])),
+    queryKey: ['card-variants'],
+    queryFn: fetchCardVariants,
+  }))
+}
+
+const createUserQuery = () => {
+  return createQuery(() => ({
+    queryKey: ['user'],
+    queryFn: () => supabase.auth.getUser(),
+    select: (res) => res.data.user,
   }))
 }
 
 export const Board = () => {
   const { id } = useParams();
 
-  const [cardVariants] = createResource(() => fetchCardVariants());
-  // const cardVariantsQuery = createCarvVariantsQuery();
+  const userQuery = createUserQuery();
+  // const [cardVariants] = createResource(() => fetchCardVariants());
+  const cardVariantsQuery = createCardVariantsQuery();
   const boardQuery = createBoardQuery(id);
+
+  const renderUserTower = () => {
+    const user = userQuery.data;
+    if (!user) return null;
+    const board = boardQuery.data!.edges[0].node;
+    const tower = boardQuery.data!.edges[0].node.card_towerCollection?.edges.filter(({node}) => node.user_id === user.id)[0].node;
+    if (!tower) return null;
+    const cardVariants = cardVariantsQuery.data;
+    if (!cardVariants) return null;
+    return <UserTower id={tower.id} cards={tower.card_in_towerCollection?.edges || []} userId={user.id} cardVariants={cardVariants} openedCardToUse={board.opened_card_number_to_use ?? null} />
+  }
+
+  const renderOtherUsersTowers = () => {
+    const user = userQuery.data;
+    if (!user) return null;
+    const cardVariants = cardVariantsQuery.data;
+    if (!cardVariants) return null;
+    const towersEdges = boardQuery.data!.edges[0].node.card_towerCollection?.edges.filter(({node}) => node.user_id !== user.id);
+    return <For each={towersEdges}>{({node: tower}) => (
+      <Tower id={tower.id} userId={tower.user_id} cards={tower.card_in_towerCollection?.edges || []} cardVariants={cardVariants} />
+    )}</For>;
+  }
 
   return <div style={{height: '100%', padding: '16px'}}>
     <Switch>
-      <Match when={boardQuery.isPending}>Loading...</Match>
-      <Match when={boardQuery.isError}>Error: {boardQuery.error?.message}</Match>
-      <Match when={boardQuery.isSuccess}>
+      <Match when={boardQuery.isPending || userQuery.isPending || cardVariantsQuery.isPending}>Loading...</Match>
+      <Match when={boardQuery.isError || userQuery.error || cardVariantsQuery.error}>Error</Match>
+      <Match when={boardQuery.isSuccess && boardQuery.isSuccess && cardVariantsQuery.isSuccess}>
         {/* Decks horizontal list */}
         <div style={{display: 'flex', "flex-direction": "row", "justify-content": "space-between", "padding-left": "8px", "padding-right": "8px"}}>
-          <For each={boardQuery.data!.edges[0].node.card_towerCollection?.edges}>{({node: tower}) => (
-            <Tower id={tower.id} userId={tower.user_id} cards={tower.card_in_towerCollection?.edges || []} cardVariants={cardVariants} />
-          )}</For>
+          {renderUserTower()}
+          {renderOtherUsersTowers()}
         </div>
         <div>
           <div>Deck</div>
@@ -82,7 +120,7 @@ export const Board = () => {
             await supabase.functions.invoke('pull-card', {body: {boardId: id}});
           }}>pull card</button>
           <div>Pulled card</div>
-          {boardQuery.data!.edges[0].node.pulled_card_number_to_change && <div>{cardVariants()?.get(boardQuery.data!.edges[0].node.pulled_card_number_to_change)}</div>}
+          {boardQuery.data!.edges[0].node.pulled_card_number_to_change && <div>{cardVariantsQuery.data?.get(boardQuery.data!.edges[0].node.pulled_card_number_to_change)}</div>}
         </div>
       </Match>
     </Switch>
