@@ -1,5 +1,4 @@
-import { TCardPower, TCardVariants } from '@front/Board/fetchers/fetchCardVariants/types';
-import { Resource } from 'solid-js';
+import { TCardPower } from '@front/Board/fetchers/fetchCardVariants/types';
 
 const PowerTitle: Record<TCardPower, string> = {
   Move_down_by_two: 'Move down by two',
@@ -19,20 +18,18 @@ export const Card = (props: {
   isProtected: boolean;
   onClick: () => void;
 }) => {
-  const { number, power, onClick, isActionAvailable } = props;
-
   return (
     <div
-      onClick={() => onClick()}
+      onClick={() => props.onClick()}
       style={{
         display: 'flex',
         "flex-direction": 'column',
         padding: '10px',
-        "background-color": isActionAvailable ? 'purple' : 'black',
+        "background-color": props.isActionAvailable ? 'purple' : 'black',
       }}
     >
-      <div>card {number}</div>
-        <div>({PowerTitle[power]})</div>
+      <div>card {props.number}</div>
+        <div>({PowerTitle[props.power]})</div>
     </div>
   )
 }

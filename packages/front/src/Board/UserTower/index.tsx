@@ -30,12 +30,11 @@ export const UserTower = (props: {
   cardVariants: TCardVariants;
   openedCardToUse: number | null;
 }) => {
-  const { id, userId, cards, cardVariants, openedCardToUse } = props
   const [selectedCardIndexAccessor, setSelectedCardIndex] = createSignal<number | null>(null)
   
   const makeAction = async (index: number) => {
-    if (!openedCardToUse) throw new Error('Can not make an action when there is no opened card to use');
-    const openedCardPower = cardVariants.get(openedCardToUse)!;
+    if (!props.openedCardToUse) throw new Error('Can not make an action when there is no opened card to use');
+    const openedCardPower = props.cardVariants.get(props.openedCardToUse)!;
     const selectedCardIndex = selectedCardIndexAccessor();
     if (selectedCardIndex === null) {
       if (openedCardPower === 'Protect') return setSelectedCardIndex(index);
@@ -46,18 +45,18 @@ export const UserTower = (props: {
   };
 
   const checkIsAvailableForAction = (number: number, power: TCardPower, index: number, isProtected: boolean): boolean => {
-    if (!openedCardToUse) return false;
-    const openedCardPower = cardVariants.get(openedCardToUse)!;
+    if (!props.openedCardToUse) return false;
+    const openedCardPower = props.cardVariants.get(props.openedCardToUse)!;
     const selectedCardIndex = selectedCardIndexAccessor();
     if (selectedCardIndex === null) {
       if (openedCardPower === 'Protect') return !isProtected;
       if (openedCardPower === 'Remove_top') return index === 0;
       if (openedCardPower === 'Remove_middle') return index === 3;
       if (openedCardPower === 'Remove_bottom') return index === 6;
-      if (openedCardPower === 'Swap_neighbours') return !isProtected && (!cards[index + 1]?.node.is_protected || !cards[index - 1]?.node.is_protected);
-      if (openedCardPower === 'Swap_through_one') return !isProtected && (!cards[index + 2]?.node.is_protected || !cards[index - 2]?.node.is_protected);
-      if (openedCardPower === 'Move_up_by_two') return !isProtected && (!cards[index + 1]?.node.is_protected || !cards[index + 2]?.node.is_protected);
-      if (openedCardPower === 'Move_down_by_two') return !isProtected && (!cards[index - 1]?.node.is_protected || !cards[index - 2]?.node.is_protected);
+      if (openedCardPower === 'Swap_neighbours') return !isProtected && (!props.cards[index + 1]?.node.is_protected || !props.cards[index - 1]?.node.is_protected);
+      if (openedCardPower === 'Swap_through_one') return !isProtected && (!props.cards[index + 2]?.node.is_protected || !props.cards[index - 2]?.node.is_protected);
+      if (openedCardPower === 'Move_up_by_two') return !isProtected && (!props.cards[index + 1]?.node.is_protected || !props.cards[index + 2]?.node.is_protected);
+      if (openedCardPower === 'Move_down_by_two') return !isProtected && (!props.cards[index - 1]?.node.is_protected || !props.cards[index - 2]?.node.is_protected);
     } else {
       if (openedCardPower === 'Protect') return Math.abs(selectedCardIndex - index) === 1;
       if (openedCardPower === 'Swap_neighbours') return !isProtected && Math.abs(selectedCardIndex - index) === 1;
@@ -67,8 +66,8 @@ export const UserTower = (props: {
   }
 
   return <div style={{display: 'flex', "flex-direction": 'column', gap: '8px'}}>
-    <For each={cards}>{(card, index) => {
-      const power = cardVariants.get(card.node.card_number)!
+    <For each={props.cards}>{(card, index) => {
+      const power = props.cardVariants.get(card.node.card_number)!
 
       // @TODO add is_protected to card_in_tower
       // const isProtected = card.node.is_protected;
