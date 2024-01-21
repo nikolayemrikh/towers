@@ -2,6 +2,7 @@ import { For, Resource, createSignal } from 'solid-js';
 import { TCardPower, TCardVariants } from '../fetchers/fetchCardVariants/types';
 import { BoardCollectionQuery } from '@front/__generated__/graphql/graphql';
 import { Card } from '../Card';
+import { supabase } from '../../supabaseClient';
 
 const PowerTitle: Record<TCardPower, string> = {
   Move_down_by_two: 'Move down by two',
@@ -23,10 +24,16 @@ export const UserTower = (props: {
   cards: TCards
   cardVariants: TCardVariants;
   openedCardToUse: number | null;
+  pulledCardToChange: number | null;
 }) => {
   const [selectedCardIndexAccessor, setSelectedCardIndex] = createSignal<number | null>(null)
   
   const makeAction = async (index: number) => {
+    if (props.pulledCardToChange) {
+      await supabase.functions.invoke('change-card-to-pulled', {body: { towerId: props.id, index }})
+      // make action
+      return;
+    }
     if (!props.openedCardToUse) throw new Error('Can not make an action when there is no opened card to use');
     const openedCardPower = props.cardVariants.get(props.openedCardToUse)!;
     const selectedCardIndex = selectedCardIndexAccessor();
@@ -38,25 +45,28 @@ export const UserTower = (props: {
     // make action
   };
 
-  const checkIsAvailableForAction = (number: number, power: TCardPower, index: number, isProtected: boolean): boolean => {
-    if (!props.openedCardToUse) return false;
-    const openedCardPower = props.cardVariants.get(props.openedCardToUse)!;
-    const selectedCardIndex = selectedCardIndexAccessor();
-    if (selectedCardIndex === null) {
-      if (openedCardPower === 'Protect') return !isProtected;
-      if (openedCardPower === 'Remove_top') return index === 0;
-      if (openedCardPower === 'Remove_middle') return index === 3;
-      if (openedCardPower === 'Remove_bottom') return index === 6;
-      if (openedCardPower === 'Swap_neighbours') return !isProtected && (!props.cards[index + 1]?.node.is_protected || !props.cards[index - 1]?.node.is_protected);
-      if (openedCardPower === 'Swap_through_one') return !isProtected && (!props.cards[index + 2]?.node.is_protected || !props.cards[index - 2]?.node.is_protected);
-      if (openedCardPower === 'Move_up_by_two') return !isProtected && (!props.cards[index + 1]?.node.is_protected || !props.cards[index + 2]?.node.is_protected);
-      if (openedCardPower === 'Move_down_by_two') return !isProtected && (!props.cards[index - 1]?.node.is_protected || !props.cards[index - 2]?.node.is_protected);
-    } else {
-      if (openedCardPower === 'Protect') return Math.abs(selectedCardIndex - index) === 1;
-      if (openedCardPower === 'Swap_neighbours') return !isProtected && Math.abs(selectedCardIndex - index) === 1;
-      if (openedCardPower === 'Swap_through_one') return !isProtected && Math.abs(selectedCardIndex - index) === 2;
-      throw new Error(`Action for opened card power "${openedCardPower}" can't have second step`);
+  const checkIsAvailableForAction = (number: number, power: TCardPower, index: number, isProtected: boolean): boolean => {  
+    if (props.pulledCardToChange) return true;
+    if (props.openedCardToUse) {
+      const openedCardPower = props.cardVariants.get(props.openedCardToUse)!;
+      const selectedCardIndex = selectedCardIndexAccessor();
+      if (selectedCardIndex === null) {
+        if (openedCardPower === 'Protect') return !isProtected;
+        if (openedCardPower === 'Remove_top') return index === 0;
+        if (openedCardPower === 'Remove_middle') return index === 3;
+        if (openedCardPower === 'Remove_bottom') return index === 6;
+        if (openedCardPower === 'Swap_neighbours') return !isProtected && (!props.cards[index + 1]?.node.is_protected || !props.cards[index - 1]?.node.is_protected);
+        if (openedCardPower === 'Swap_through_one') return !isProtected && (!props.cards[index + 2]?.node.is_protected || !props.cards[index - 2]?.node.is_protected);
+        if (openedCardPower === 'Move_up_by_two') return !isProtected && (!props.cards[index + 1]?.node.is_protected || !props.cards[index + 2]?.node.is_protected);
+        if (openedCardPower === 'Move_down_by_two') return !isProtected && (!props.cards[index - 1]?.node.is_protected || !props.cards[index - 2]?.node.is_protected);
+      } else {
+        if (openedCardPower === 'Protect') return Math.abs(selectedCardIndex - index) === 1;
+        if (openedCardPower === 'Swap_neighbours') return !isProtected && Math.abs(selectedCardIndex - index) === 1;
+        if (openedCardPower === 'Swap_through_one') return !isProtected && Math.abs(selectedCardIndex - index) === 2;
+        throw new Error(`Action for opened card power "${openedCardPower}" can't have second step`);
+      }
     }
+    return false;
   }
 
   return <div style={{display: 'flex', "flex-direction": 'column', gap: '8px'}}>

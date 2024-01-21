@@ -2,7 +2,7 @@ import { useParams } from '@solidjs/router';
 import { Tower } from './Tower'
 import { For, Match, Switch, createEffect, createResource } from 'solid-js';
 import { fetchCardVariants } from './fetchers/fetchCardVariants';
-import { createQuery } from '@tanstack/solid-query';
+import { createMutation, createQuery } from '@tanstack/solid-query';
 import { createGraphQLClient } from '../core/graphql/createGraphQLClient';
 import { boardQueryDocument } from './graphql-documents/boardQueryDocument';
 import { getGraphqlQueryKey } from '../core/graphql/createGetQueryKet';
@@ -75,6 +75,8 @@ const createUserQuery = () => {
   }))
 }
 
+
+
 export const Board = () => {
   const { id } = useParams();
 
@@ -82,6 +84,14 @@ export const Board = () => {
   // const [cardVariants] = createResource(() => fetchCardVariants());
   const cardVariantsQuery = createCardVariantsQuery();
   const boardQuery = createBoardQuery(id);
+
+  const createPullCardMutation = () => {
+    return createMutation(() => ({
+      mutationFn: (boardId: string) => supabase.functions.invoke('pull-card', {body: { boardId }}),
+      onSuccess: () => boardQuery.refetch(),
+    }))
+  }
+  const pullCardMutation = createPullCardMutation();
 
   const renderUserTower = () => {
     const user = userQuery.data;
@@ -91,7 +101,7 @@ export const Board = () => {
     if (!tower) return null;
     const cardVariants = cardVariantsQuery.data;
     if (!cardVariants) return null;
-    return <UserTower id={tower.id} cards={tower.card_in_towerCollection?.edges || []} userId={user.id} cardVariants={cardVariants} openedCardToUse={board.opened_card_number_to_use ?? null} />
+    return <UserTower id={tower.id} cards={tower.card_in_towerCollection?.edges || []} userId={user.id} cardVariants={cardVariants} openedCardToUse={board.opened_card_number_to_use ?? null} pulledCardToChange={board.pulled_card_number_to_change ?? null} />
   }
 
   const renderOtherUsersTowers = () => {
@@ -125,7 +135,7 @@ export const Board = () => {
       <Match when={boardQuery.isSuccess && boardQuery.isSuccess && cardVariantsQuery.isSuccess}>
         <div>
           <div>Deck</div>
-          <button onClick={() => supabase.functions.invoke('pull-card', {body: {boardId: id}})}>pull card</button>
+          <button onClick={() => pullCardMutation.mutate(id)}>pull card</button>
           <div>Pulled card</div>
           {renderPulledCard()}
         </div>
