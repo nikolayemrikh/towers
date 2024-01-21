@@ -1,8 +1,11 @@
-import { For, Resource, createSignal } from 'solid-js';
+import { For, Resource, createSignal, useContext } from 'solid-js';
 import { TCardPower, TCardVariants } from '../fetchers/fetchCardVariants/types';
 import { BoardCollectionQuery } from '@front/__generated__/graphql/graphql';
 import { Card } from '../Card';
 import { supabase } from '../../supabaseClient';
+import { QueryClientContext, createMutation } from '@tanstack/solid-query';
+import { getGraphqlQueryKey } from '../../core/graphql/createGetQueryKet';
+import { boardQueryDocument } from '../graphql-documents/boardQueryDocument';
 
 const PowerTitle: Record<TCardPower, string> = {
   Move_down_by_two: 'Move down by two',
@@ -26,12 +29,21 @@ export const UserTower = (props: {
   openedCardToUse: number | null;
   pulledCardToChange: number | null;
 }) => {
-  const [selectedCardIndexAccessor, setSelectedCardIndex] = createSignal<number | null>(null)
+  const [selectedCardIndexAccessor, setSelectedCardIndex] = createSignal<number | null>(null);
+  const queryClient = useContext(QueryClientContext);
+
+  const createChangeCardToPulledMutation = () => {
+    return createMutation(() => ({
+      mutationFn: (index: number) => supabase.functions.invoke('change-card-to-pulled', {body: { towerId: props.id, index }}),
+      onSuccess: () => queryClient?.().refetchQueries({ queryKey: [getGraphqlQueryKey(boardQueryDocument), props.id], exact: true }),
+    }))
+  }
+
+  const changeCardToPulledMutation = createChangeCardToPulledMutation()
   
   const makeAction = async (index: number) => {
     if (props.pulledCardToChange) {
-      await supabase.functions.invoke('change-card-to-pulled', {body: { towerId: props.id, index }})
-      // make action
+      changeCardToPulledMutation.mutate(index);
       return;
     }
     if (!props.openedCardToUse) throw new Error('Can not make an action when there is no opened card to use');
