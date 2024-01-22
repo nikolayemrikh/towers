@@ -92,6 +92,14 @@ export const Board = () => {
     }))
   }
   const pullCardMutation = createPullCardMutation();
+  
+  const createSelectOpenedCardMutation = () => {
+    return createMutation(() => ({
+      mutationFn: (payload: {boardId: string, cardNumber: number}) => supabase.functions.invoke('select-opened-card', {body: payload}),
+      onSuccess: () => boardQuery.refetch(),
+    }))
+  }
+  const selectOpenedCard = createSelectOpenedCardMutation();
 
   const renderUserTower = () => {
     const user = userQuery.data;
@@ -127,8 +135,22 @@ export const Board = () => {
       isProtected={false}
     />
   }
+  
+  const renderSelectedOpened = () => {
+    const board = boardQuery.data!.edges[0].node;
+    if (!board.opened_card_number_to_use) return null;
+    const cardVariants = cardVariantsQuery.data;
+    if (!cardVariants) return null;
+    return <Card
+      number={board.opened_card_number_to_use}
+      power={cardVariants.get(board.opened_card_number_to_use)!}
+      isActionAvailable={false}
+      isProtected={false}
+    />
+  }
 
   const renderOpenedCards = () => {
+    const board = boardQuery.data!.edges[0].node;
     const openedCards = boardQuery.data!.edges[0].node.card_in_board_openedCollection?.edges;
 
     const cardVariants = cardVariantsQuery.data;
@@ -140,6 +162,10 @@ export const Board = () => {
         power={cardVariants.get(openedCard.card_number)!}
         isActionAvailable={false}
         isProtected={false}
+        onClick={() => {
+          if (board.opened_card_number_to_use) return true;
+          selectOpenedCard.mutate({boardId: board.id, cardNumber: openedCard.card_number});
+        }}
       />
     )}</For>;
   }
@@ -156,6 +182,8 @@ export const Board = () => {
           {renderPulledCard()}
           <div>Opened cards</div>
           {renderOpenedCards()}
+          <div>Selected opened card</div>
+          {renderSelectedOpened()}
         </div>
         <div>Towers</div>
         {/* Decks horizontal list */}
