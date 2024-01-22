@@ -128,6 +128,22 @@ export const Board = () => {
     />
   }
 
+  const renderOpenedCards = () => {
+    const openedCards = boardQuery.data!.edges[0].node.card_in_board_openedCollection?.edges;
+
+    const cardVariants = cardVariantsQuery.data;
+    if (!cardVariants) return null;
+
+    return <For each={openedCards}>{({node: openedCard}) => (
+      <Card
+        number={openedCard.card_number}
+        power={cardVariants.get(openedCard.card_number)!}
+        isActionAvailable={false}
+        isProtected={false}
+      />
+    )}</For>;
+  }
+
   return <div style={{height: '100%', padding: '16px'}}>
     <Switch>
       <Match when={boardQuery.isPending || userQuery.isPending || cardVariantsQuery.isPending}>Loading...</Match>
@@ -138,6 +154,8 @@ export const Board = () => {
           <button onClick={() => pullCardMutation.mutate(id)}>pull card</button>
           <div>Pulled card</div>
           {renderPulledCard()}
+          <div>Opened cards</div>
+          {renderOpenedCards()}
         </div>
         <div>Towers</div>
         {/* Decks horizontal list */}
