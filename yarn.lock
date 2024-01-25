@@ -2279,7 +2279,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bin-links@npm:^4.0.1":
+"bin-links@npm:^4.0.1, bin-links@npm:^4.0.3":
   version: 4.0.3
   resolution: "bin-links@npm:4.0.3"
   dependencies:
@@ -4327,7 +4327,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-fetch@npm:^3.2.10":
+"node-fetch@npm:^3.2.10, node-fetch@npm:^3.3.2":
   version: 3.3.2
   resolution: "node-fetch@npm:3.3.2"
   dependencies:
@@ -5292,6 +5292,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"supabase@npm:1.136.3":
+  version: 1.136.3
+  resolution: "supabase@npm:1.136.3"
+  dependencies:
+    bin-links: "npm:^4.0.3"
+    https-proxy-agent: "npm:^7.0.2"
+    node-fetch: "npm:^3.3.2"
+    tar: "npm:6.2.0"
+  bin:
+    supabase: bin/supabase
+  checksum: 3bcbb845a54bcff2ad41966df10ed3afa539f50997cdbb5b85203abd800ef92607fb5bd75cd3d88b77c27dc8b7722e5950d5d924d1a9ac3148aa96b9108c5667
+  languageName: node
+  linkType: hard
+
 "supports-color@npm:^5.3.0":
   version: 5.5.0
   resolution: "supports-color@npm:5.5.0"
@@ -5393,6 +5407,8 @@ __metadata:
 "towers@workspace:.":
   version: 0.0.0-use.local
   resolution: "towers@workspace:."
+  dependencies:
+    supabase: "npm:1.136.3"
   languageName: unknown
   linkType: soft
 

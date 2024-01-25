@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "generate-graphql-typings": "npx graphql-code-generator --config ./codegen.config.ts",
-    "generate-graphql-typings:watch": "npx graphql-code-generator --watch --config ./codegen.config.ts"
+    "generate-graphql-typings:watch": "npx graphql-code-generator --watch --config ./codegen.config.ts",
+    "supabase:gen:types": "SUPABASE_ACCESS_TOKEN=sbp_2aedf3aad5e242751b4f93a2fbfcadcb054f0e8d npx supabase gen types typescript --project-id bjuwwpsquwanxvzqfqwk > src/supabase-db.types.ts"
   },
   "dependencies": {
     "@solidjs/router": "0.10.5",

@@ -4,5 +4,8 @@
   "packageManager": "yarn@4.0.2",
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "supabase": "1.136.3"
+  }
 }
