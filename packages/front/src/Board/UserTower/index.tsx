@@ -6,6 +6,7 @@ import { supabase } from '../../supabaseClient';
 import { QueryClientContext, createMutation } from '@tanstack/solid-query';
 import { getGraphqlQueryKey } from '../../core/graphql/createGetQueryKet';
 import { boardQueryDocument } from '../graphql-documents/boardQueryDocument';
+import { TUseSelectedCardRequest } from '@shared/_supabase/use-selected-card.types';
 
 const PowerTitle: Record<TCardPower, string> = {
   Move_down_by_two: 'Move down by two',
@@ -41,6 +42,15 @@ export const UserTower = (props: {
 
   const changeCardToPulledMutation = createChangeCardToPulledMutation()
   
+  const createUseSelectedCardMutation = () => {
+    return createMutation(() => ({
+      mutationFn: (payload: TUseSelectedCardRequest) => supabase.functions.invoke('use-selected-card', {body: payload}),
+      onSuccess: () => queryClient?.().refetchQueries({ queryKey: [getGraphqlQueryKey(boardQueryDocument), props.id], exact: true }),
+    }))
+  }
+
+  const useSelectedCardMutation = createUseSelectedCardMutation()
+  
   const makeAction = async (index: number) => {
     if (props.pulledCardToChange) {
       changeCardToPulledMutation.mutate(index);
@@ -53,8 +63,10 @@ export const UserTower = (props: {
       if (openedCardPower === 'Protect') return setSelectedCardIndex(index);
       if (openedCardPower === 'Swap_neighbours') return setSelectedCardIndex(index);
       if (openedCardPower === 'Swap_through_one') return setSelectedCardIndex(index);
+      return;
     }
     // make action
+    useSelectedCardMutation.mutate({boardId: 'asd', power: 'Protect', fisrtCardIndex: selectedCardIndex, secondCardIndex: index })
   };
 
   const checkIsAvailableForAction = (number: number, power: TCardPower, index: number, isProtected: boolean): boolean => {  
