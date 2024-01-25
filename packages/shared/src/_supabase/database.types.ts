@@ -127,63 +127,24 @@ export interface Database {
           }
         ]
       }
-      card_in_board_opened: {
-        Row: {
-          board_id: number | null
-          card_number: number
-          created_at: string
-          id: number
-        }
-        Insert: {
-          board_id?: number | null
-          card_number: number
-          created_at?: string
-          id?: number
-        }
-        Update: {
-          board_id?: number | null
-          card_number?: number
-          created_at?: string
-          id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "card_in_board_opened_board_id_fkey"
-            columns: ["board_id"]
-            isOneToOne: false
-            referencedRelation: "board"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "card_in_board_opened_card_number_fkey"
-            columns: ["card_number"]
-            isOneToOne: false
-            referencedRelation: "card_variant"
-            referencedColumns: ["number"]
-          }
-        ]
-      }
       card_in_tower: {
         Row: {
           card_number: number
           card_tower_id: number
           created_at: string
           id: number
-          is_protected: boolean
         }
         Insert: {
           card_number: number
           card_tower_id: number
           created_at?: string
           id?: number
-          is_protected?: boolean
         }
         Update: {
           card_number?: number
           card_tower_id?: number
           created_at?: string
           id?: number
-          is_protected?: boolean
         }
         Relationships: [
           {
@@ -382,4 +343,3 @@ export type Enums<
   : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
   ? Database["public"]["Enums"][PublicEnumNameOrOptions]
   : never
-

@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Database } from '../_shared/database.types.ts';
+import { Database } from '../../../shared/src/_supabase/database.types.ts';
 import { corsHeaders } from '../_shared/cors.ts';
+import { TUseSelectedCardRequest } from '../../../shared/src/_supabase/use-selected-card.types.ts';
 // Follow this setup guide to integrate the Deno language server with your editor:
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.
@@ -14,7 +15,9 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders })
   }
   const authHeader = req.headers.get('Authorization')!;
-  const { boardId } = await req.json() as { boardId: string };
+  const res = await req.json() as TUseSelectedCardRequest;
+
+  const { boardId } = res;
 
   const supabaseClient = createClient<Database>(
     Deno.env.get('SUPABASE_URL')!,
@@ -46,6 +49,25 @@ Deno.serve(async (req: Request) => {
 
   const power = cardVariant.power;
   
+  const resPower = res.power;
+  if (resPower !== power) throw new Error(`Can not use card with power "${power}" when power "${res.power}" is requested`);
+  
+  switch (resPower) {
+    case 'Protect':
+      res.fisrtCardIndex
+      break;
+    case 'Remove_top':
+      break;
+    case 'Remove_middle':
+      break;
+    case 'Remove_bottom':
+      break;
+  
+    default: {
+      const unhandledPower: never = resPower;
+      throw new Error(`Unhandled power "${unhandledPower}"`);
+    }
+  }
 
 
   return new Response(JSON.stringify({ ok: 123 }), {

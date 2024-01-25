@@ -3,7 +3,7 @@
 // This enables autocomplete, go to definition, etc.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.1';
-import { Database } from '../_shared/database.types.ts';
+import { Database } from '../../../shared/src/_supabase/database.types.ts';
 
 console.log("Hello from Functions!")
 
