@@ -52,12 +52,26 @@ Deno.serve(async (req: Request) => {
   
   const resPower = res.power;
   if (resPower !== power) throw new Error(`Can not use card with power "${power}" when power "${res.power}" is requested`);
-  
+
+  const { data: cardTowers, error: cardTowersError } = await supabaseServiceClient.from('card_tower').select('*').eq('user_id', user.id);
+  if (cardTowersError) throw new Error(cardTowersError.message);
+  const cardTower = cardTowers[0];
+  if (!cardTower) throw new Error('Card tower for current user not found');
+
+  const { data: cardsInTower, error: cardsInTowerError } = await supabaseServiceClient.from('card_in_tower').select('*').eq('card_tower_id', cardTower.id);
+  if (cardsInTowerError) throw new Error(cardsInTowerError.message);
+
   switch (resPower) {
-    case 'Protect':
+    case 'Protect': {
       if (Math.abs(res.fisrtCardIndex - res.secondCardIndex) !== 1) throw new Error('Can not protect cards that are not next to each other');
-      // await supabaseServiceClient.from('card_in_tower').update({ is_protected: true }).eq('id', res);
+      const [{error: updateCardInTowerFirstError }, {error: updateCardInTowerSecondError}] = await Promise.all([
+        await supabaseServiceClient.from('card_in_tower').update({ is_protected: true }).eq('id', cardsInTower[res.fisrtCardIndex].id),
+        await supabaseServiceClient.from('card_in_tower').update({ is_protected: true }).eq('id', cardsInTower[res.secondCardIndex].id)
+      ]);
+      if (updateCardInTowerFirstError) throw new Error(updateCardInTowerFirstError.message);
+      if (updateCardInTowerSecondError) throw new Error(updateCardInTowerSecondError.message);
       break;
+    }
     case 'Remove_top':
       break;
     case 'Remove_middle':
