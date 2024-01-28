@@ -36,7 +36,7 @@ export const UserTower = (props: {
 
   const createChangeCardToPulledMutation = () => {
     return createMutation(() => ({
-      mutationFn: (index: number) => supabase.functions.invoke('change-card-to-pulled', {body: { towerId: props.id, index }}),
+      mutationFn: (index: number) => supabase.functions.invoke('change-card-to-pulled', {body: { index }}),
       onSuccess: () => queryClient?.().refetchQueries({ queryKey: [getGraphqlQueryKey(boardQueryDocument), props.id], exact: true }),
     }))
   }

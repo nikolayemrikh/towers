@@ -14,7 +14,7 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders })
   }
   const authHeader = req.headers.get('Authorization')!;
-  const { towerId, index } = await req.json() as { towerId: string; index: number };
+  const { index } = await req.json() as { index: number };
 
   const supabaseClient = createClient<Database>(
     Deno.env.get('SUPABASE_URL')!,
@@ -31,19 +31,21 @@ Deno.serve(async (req: Request) => {
   const user = data.user;
   if (!user) throw new Error('User not found');
 
-  const { data: cardsInTower, error: cardsInTowerError } = await supabaseServiceClient.from('card_in_tower').select('*').eq('card_tower_id', towerId).order('id', { ascending: true });
+  const { data: cardTowers, error: cardTowersError } = await supabaseServiceClient.from('card_tower').select('*').eq('user_id', user.id);
+  if (cardTowersError) throw new Error(cardTowersError.message);
+  const cardTower = cardTowers[0];
+  if (!cardTower) throw new Error('Card tower for current user not found');
+  const boardId = cardTower.board_id;
+
+  const { data: cardsInTower, error: cardsInTowerError } = await supabaseServiceClient.from('card_in_tower').select('*').eq('card_tower_id', cardTower.id).order('id', { ascending: true });
   if (cardsInTowerError) throw new Error(cardsInTowerError.message);
 
   const cardToChange = cardsInTower[index];
-
-  const { data: cardTowers, error: cardTowersError } = await supabaseServiceClient.from('card_tower').select('*').eq('id', towerId);
-  if (cardTowersError) throw new Error(cardTowersError.message);
-  const cardTower = cardTowers[0];
-  const boardId = cardTower.board_id;
   
   const { data: boards, error: boardsError } = await supabaseServiceClient.from('board').select('*').eq('id', boardId).eq('turn_user_id', user.id);
   if (boardsError) throw new Error(boardsError.message);
   const board = boards[0];
+  
   
   const pulledCardNumberToChange = board.pulled_card_number_to_change;
   if (!pulledCardNumberToChange) throw new Error('Can not chage card when "pulled_card_number_to_change" is not set');
