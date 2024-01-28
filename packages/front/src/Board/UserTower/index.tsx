@@ -6,7 +6,7 @@ import { supabase } from '../../supabaseClient';
 import { QueryClientContext, createMutation } from '@tanstack/solid-query';
 import { getGraphqlQueryKey } from '../../core/graphql/createGetQueryKet';
 import { boardQueryDocument } from '../graphql-documents/boardQueryDocument';
-import { TUseSelectedCardRequest } from '@shared/_supabase/use-selected-card.types';
+import { TUseSelectedCardRequest } from '@supabase/functions/_shared/use-selected-card.types';
 
 const PowerTitle: Record<TCardPower, string> = {
   Move_down_by_two: 'Move down by two',
@@ -60,11 +60,13 @@ export const UserTower = (props: {
     const openedCardPower = props.cardVariants.get(props.openedCardToUse)!;
     const selectedCardIndex = selectedCardIndexAccessor();
     if (selectedCardIndex === null) {
+      console.log(123);
       if (openedCardPower === 'Protect') return setSelectedCardIndex(index);
       if (openedCardPower === 'Swap_neighbours') return setSelectedCardIndex(index);
       if (openedCardPower === 'Swap_through_one') return setSelectedCardIndex(index);
       return;
     }
+    
     // make action
     useSelectedCardMutation.mutate({boardId: 'asd', power: 'Protect', fisrtCardIndex: selectedCardIndex, secondCardIndex: index })
   };

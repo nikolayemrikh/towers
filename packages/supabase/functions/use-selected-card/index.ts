@@ -1,7 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Database } from '../../../shared/src/_supabase/database.types.ts';
+import { Database } from '../_shared/database.types.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { TUseSelectedCardRequest } from '../../../shared/src/_supabase/use-selected-card.types.ts';
+import { TUseSelectedCardRequest } from '../_shared/use-selected-card.types.ts';
+// import { TUseSelectedCardRequest } from '../../../shared/src/_supabase/use-selected-card.types.ts';
 // Follow this setup guide to integrate the Deno language server with your editor:
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.
@@ -54,7 +55,8 @@ Deno.serve(async (req: Request) => {
   
   switch (resPower) {
     case 'Protect':
-      res.fisrtCardIndex
+      console.log(res);
+      
       break;
     case 'Remove_top':
       break;

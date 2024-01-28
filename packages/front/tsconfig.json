@@ -20,7 +20,8 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@front/*": ["./src/*"],
-      "@shared/*": ["../shared/src/*"]
+      "@shared/*": ["../shared/src/*"],
+      "@supabase/*": ["../supabase/*"]
     }
   },
   "include": ["src"],
