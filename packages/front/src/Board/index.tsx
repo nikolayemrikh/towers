@@ -109,7 +109,7 @@ export const Board = () => {
     if (!tower) return null;
     const cardVariants = cardVariantsQuery.data;
     if (!cardVariants) return null;
-    return <UserTower id={tower.id} cards={tower.card_in_towerCollection?.edges || []} userId={user.id} cardVariants={cardVariants} openedCardToUse={board.opened_card_number_to_use ?? null} pulledCardToChange={board.pulled_card_number_to_change ?? null} />
+    return <UserTower id={tower.id} boardId={board.id} cards={tower.card_in_towerCollection?.edges || []} userId={user.id} cardVariants={cardVariants} openedCardToUse={board.opened_card_number_to_use ?? null} pulledCardToChange={board.pulled_card_number_to_change ?? null} />
   }
 
   const renderOtherUsersTowers = () => {

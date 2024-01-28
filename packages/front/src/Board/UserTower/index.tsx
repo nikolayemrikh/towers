@@ -24,6 +24,7 @@ type TCards = TN<TN<TN<TN<TN<BoardCollectionQuery['boardCollection']>['edges']>[
 
 export const UserTower = (props: {
   id: string;
+  boardId: string;
   userId: string;
   cards: TCards
   cardVariants: TCardVariants;
@@ -64,11 +65,11 @@ export const UserTower = (props: {
         case 'Protect': return setSelectedCardIndex(index);
         case 'Swap_neighbours': return setSelectedCardIndex(index);
         case 'Swap_through_one': return setSelectedCardIndex(index);
-        case 'Remove_top': return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Remove_top'});
-        case 'Remove_middle': return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Remove_middle'});
-        case 'Remove_bottom': return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Remove_bottom'});
-        case 'Move_up_by_two': return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Move_up_by_two', cardIndex: index });
-        case 'Move_down_by_two': return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Move_down_by_two', cardIndex: index });
+        case 'Remove_top': return useSelectedCardMutation.mutate({boardId: props.boardId, power: 'Remove_top'});
+        case 'Remove_middle': return useSelectedCardMutation.mutate({boardId: props.boardId, power: 'Remove_middle'});
+        case 'Remove_bottom': return useSelectedCardMutation.mutate({boardId: props.boardId, power: 'Remove_bottom'});
+        case 'Move_up_by_two': return useSelectedCardMutation.mutate({boardId: props.boardId, power: 'Move_up_by_two', cardIndex: index });
+        case 'Move_down_by_two': return useSelectedCardMutation.mutate({boardId: props.boardId, power: 'Move_down_by_two', cardIndex: index });
         default: {
           const unhandledPower: never = openedCardPower;
           throw new Error(`Unhandled power "${unhandledPower}"`);
@@ -76,9 +77,9 @@ export const UserTower = (props: {
       }
     } else {
       switch (openedCardPower) {
-        case 'Protect': return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Protect', fisrtCardIndex: selectedCardIndex, secondCardIndex: index });
-        case 'Swap_neighbours': return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Swap_neighbours', fisrtCardIndex: selectedCardIndex, secondCardIndex: index });
-        case 'Swap_through_one':  return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Swap_through_one', fisrtCardIndex: selectedCardIndex, secondCardIndex: index });
+        case 'Protect': return useSelectedCardMutation.mutate({boardId: props.boardId, power: 'Protect', fisrtCardIndex: selectedCardIndex, secondCardIndex: index });
+        case 'Swap_neighbours': return useSelectedCardMutation.mutate({boardId: props.boardId, power: 'Swap_neighbours', fisrtCardIndex: selectedCardIndex, secondCardIndex: index });
+        case 'Swap_through_one':  return useSelectedCardMutation.mutate({boardId: props.boardId, power: 'Swap_through_one', fisrtCardIndex: selectedCardIndex, secondCardIndex: index });
         default: throw new Error(`Only one card selection required to make action with power "${openedCardPower}"`);
       }
     }
