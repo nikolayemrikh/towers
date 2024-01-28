@@ -1,4 +1,4 @@
-import { Database } from './database.types';
+import { Database } from './database.types.ts';
 
 export type TCardPower = Database['public']['Enums']['Power'];
 
@@ -25,6 +25,10 @@ export interface IUseSelectedRemoveTopCardRequest extends IBaseUseSelectedCardRe
 
 export interface IUseSelectedRemoveMiddleCardRequest extends IBaseUseSelectedCardRequest {
   power: 'Remove_middle';
+}
+
+export interface IUseSelectedRemoveBottomCardRequest extends IBaseUseSelectedCardRequest {
+  power: 'Remove_bottom';
 }
 
 export interface IUseSelectedRemoveBottomCardRequest extends IBaseUseSelectedCardRequest {
