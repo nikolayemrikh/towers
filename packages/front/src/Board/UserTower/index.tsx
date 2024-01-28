@@ -36,7 +36,7 @@ export const UserTower = (props: {
 
   const createChangeCardToPulledMutation = () => {
     return createMutation(() => ({
-      mutationFn: (index: number) => supabase.functions.invoke('change-card-to-pulled', {body: { index }}),
+      mutationFn: (index: number) => supabase.functions.invoke('change-card-to-pulled', {body: { boardId: props.boardId, index }}),
       onSuccess: () => queryClient?.().refetchQueries({ queryKey: [getGraphqlQueryKey(boardQueryDocument), props.id], exact: true }),
     }))
   }
@@ -76,11 +76,15 @@ export const UserTower = (props: {
         }
       }
     } else {
-      switch (openedCardPower) {
-        case 'Protect': return useSelectedCardMutation.mutate({boardId: props.boardId, power: 'Protect', fisrtCardIndex: selectedCardIndex, secondCardIndex: index });
-        case 'Swap_neighbours': return useSelectedCardMutation.mutate({boardId: props.boardId, power: 'Swap_neighbours', fisrtCardIndex: selectedCardIndex, secondCardIndex: index });
-        case 'Swap_through_one':  return useSelectedCardMutation.mutate({boardId: props.boardId, power: 'Swap_through_one', fisrtCardIndex: selectedCardIndex, secondCardIndex: index });
-        default: throw new Error(`Only one card selection required to make action with power "${openedCardPower}"`);
+      try {
+        switch (openedCardPower) {
+          case 'Protect': return useSelectedCardMutation.mutate({boardId: props.boardId, power: 'Protect', fisrtCardIndex: selectedCardIndex, secondCardIndex: index });
+          case 'Swap_neighbours': return useSelectedCardMutation.mutate({boardId: props.boardId, power: 'Swap_neighbours', fisrtCardIndex: selectedCardIndex, secondCardIndex: index });
+          case 'Swap_through_one':  return useSelectedCardMutation.mutate({boardId: props.boardId, power: 'Swap_through_one', fisrtCardIndex: selectedCardIndex, secondCardIndex: index });
+          default: throw new Error(`Only one card selection required to make action with power "${openedCardPower}"`);
+        }
+      } finally {
+        setSelectedCardIndex(null);
       }
     }
   };
@@ -113,23 +117,14 @@ export const UserTower = (props: {
     <For each={props.cards}>{(card, index) => {
       const power = props.cardVariants.get(card.node.card_number)!
 
-      // @TODO add is_protected to card_in_tower
-      // const isProtected = card.node.is_protected;
-      const isProtected = false;
       return (
         <Card
           number={card.node.card_number}
           power={power}
-          isActionAvailable={checkIsAvailableForAction(card.node.card_number, power, index(), isProtected)}
-          isProtected={isProtected}
+          isActionAvailable={checkIsAvailableForAction(card.node.card_number, power, index(), card.node.is_protected)}
+          isProtected={card.node.is_protected}
           onClick={() => handleCardClick(index())}
         />
-        // <div
-        //   onClick={() => makeAction(card.node.id)}
-        //   style={{display: 'flex', "flex-direction": 'column', padding: '10px', "background-color": 'black' }}>
-        //   <div>card {card.node.card_number}</div>
-        //   <div>({cardVariants ? PowerTitle[cardVariants.get(card.node.card_number)!] : null})</div>
-        // </div>
       )
     }}</For>
   </div>

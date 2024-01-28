@@ -160,7 +160,7 @@ export const Board = () => {
       <Card
         number={openedCard.card_number}
         power={cardVariants.get(openedCard.card_number)!}
-        isActionAvailable={false}
+        isActionAvailable={!board.pulled_card_number_to_change}
         isProtected={false}
         onClick={() => {
           if (board.opened_card_number_to_use) return true;

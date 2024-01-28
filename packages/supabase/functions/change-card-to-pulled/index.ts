@@ -14,7 +14,7 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders })
   }
   const authHeader = req.headers.get('Authorization')!;
-  const { index } = await req.json() as { index: number };
+  const { boardId, index } = await req.json() as { boardId: number; index: number };
 
   const supabaseClient = createClient<Database>(
     Deno.env.get('SUPABASE_URL')!,
@@ -31,11 +31,10 @@ Deno.serve(async (req: Request) => {
   const user = data.user;
   if (!user) throw new Error('User not found');
 
-  const { data: cardTowers, error: cardTowersError } = await supabaseServiceClient.from('card_tower').select('*').eq('user_id', user.id);
+  const { data: cardTowers, error: cardTowersError } = await supabaseServiceClient.from('card_tower').select('*').eq('user_id', user.id).eq('board_id', boardId);
   if (cardTowersError) throw new Error(cardTowersError.message);
   const cardTower = cardTowers[0];
   if (!cardTower) throw new Error('Card tower for current user not found');
-  const boardId = cardTower.board_id;
 
   const { data: cardsInTower, error: cardsInTowerError } = await supabaseServiceClient.from('card_in_tower').select('*').eq('card_tower_id', cardTower.id).order('id', { ascending: true });
   if (cardsInTowerError) throw new Error(cardsInTowerError.message);
