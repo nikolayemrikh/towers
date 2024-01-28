@@ -85,6 +85,9 @@ Deno.serve(async (req: Request) => {
     }
   }
 
+  const {error: boardUpdateError} = await supabaseServiceClient.from('board').update({ opened_card_number_to_use: null }).eq('id', boardId).eq('turn_user_id', user.id);
+  if (boardUpdateError) throw new Error(boardUpdateError.message);
+
 
   return new Response(JSON.stringify({ ok: 123 }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
