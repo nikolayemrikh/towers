@@ -7,9 +7,5 @@
   ],
   "dependencies": {
     "supabase": "1.136.3"
-  },
-  "scripts": {
-    "supabase:gen:types:remote": "SUPABASE_ACCESS_TOKEN=sbp_2aedf3aad5e242751b4f93a2fbfcadcb054f0e8d npx supabase gen types typescript --project-id bjuwwpsquwanxvzqfqwk > ./packages/supabase/functions/_shared/database.types.ts",
-    "supabase:gen:types:local": "SUPABASE_ACCESS_TOKEN=sbp_2aedf3aad5e242751b4f93a2fbfcadcb054f0e8d npx supabase gen types typescript --project-id bjuwwpsquwanxvzqfqwk > ./packages/supabase/functions/_shared/database.types.ts"
   }
 }

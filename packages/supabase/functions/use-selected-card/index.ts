@@ -55,8 +55,8 @@ Deno.serve(async (req: Request) => {
   
   switch (resPower) {
     case 'Protect':
-      console.log(res);
-      
+      if (Math.abs(res.fisrtCardIndex - res.secondCardIndex) !== 1) throw new Error('Can not protect cards that are not next to each other');
+      // await supabaseServiceClient.from('card_in_tower').update({ is_protected: true }).eq('id', res);
       break;
     case 'Remove_top':
       break;
