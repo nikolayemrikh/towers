@@ -51,7 +51,7 @@ export const UserTower = (props: {
 
   const useSelectedCardMutation = createUseSelectedCardMutation()
   
-  const makeAction = async (index: number) => {
+  const handleCardClick = async (index: number) => {
     if (props.pulledCardToChange) {
       changeCardToPulledMutation.mutate(index);
       return;
@@ -60,15 +60,28 @@ export const UserTower = (props: {
     const openedCardPower = props.cardVariants.get(props.openedCardToUse)!;
     const selectedCardIndex = selectedCardIndexAccessor();
     if (selectedCardIndex === null) {
-      console.log(123);
-      if (openedCardPower === 'Protect') return setSelectedCardIndex(index);
-      if (openedCardPower === 'Swap_neighbours') return setSelectedCardIndex(index);
-      if (openedCardPower === 'Swap_through_one') return setSelectedCardIndex(index);
-      return;
+      switch (openedCardPower) {
+        case 'Protect': return setSelectedCardIndex(index);
+        case 'Swap_neighbours': return setSelectedCardIndex(index);
+        case 'Swap_through_one': return setSelectedCardIndex(index);
+        case 'Remove_top': return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Remove_top'});
+        case 'Remove_middle': return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Remove_middle'});
+        case 'Remove_bottom': return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Remove_bottom'});
+        case 'Move_up_by_two': return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Move_up_by_two', cardIndex: index });
+        case 'Move_down_by_two': return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Move_down_by_two', cardIndex: index });
+        default: {
+          const unhandledPower: never = openedCardPower;
+          throw new Error(`Unhandled power "${unhandledPower}"`);
+        }
+      }
+    } else {
+      switch (openedCardPower) {
+        case 'Protect': return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Protect', fisrtCardIndex: selectedCardIndex, secondCardIndex: index });
+        case 'Swap_neighbours': return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Swap_neighbours', fisrtCardIndex: selectedCardIndex, secondCardIndex: index });
+        case 'Swap_through_one':  return useSelectedCardMutation.mutate({boardId: 'asd', power: 'Swap_through_one', fisrtCardIndex: selectedCardIndex, secondCardIndex: index });
+        default: throw new Error(`Only one card selection required to make action with power "${openedCardPower}"`);
+      }
     }
-    
-    // make action
-    useSelectedCardMutation.mutate({boardId: 'asd', power: 'Protect', fisrtCardIndex: selectedCardIndex, secondCardIndex: index })
   };
 
   const checkIsAvailableForAction = (number: number, power: TCardPower, index: number, isProtected: boolean): boolean => {  
@@ -108,7 +121,7 @@ export const UserTower = (props: {
           power={power}
           isActionAvailable={checkIsAvailableForAction(card.node.card_number, power, index(), isProtected)}
           isProtected={isProtected}
-          onClick={() => makeAction(index())}
+          onClick={() => handleCardClick(index())}
         />
         // <div
         //   onClick={() => makeAction(card.node.id)}
