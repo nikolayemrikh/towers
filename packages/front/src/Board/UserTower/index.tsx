@@ -95,19 +95,27 @@ export const UserTower = (props: {
       const openedCardPower = props.cardVariants.get(props.openedCardToUse)!;
       const selectedCardIndex = selectedCardIndexAccessor();
       if (selectedCardIndex === null) {
-        if (openedCardPower === 'Protect') return !isProtected;
-        if (openedCardPower === 'Remove_top') return index === 0;
-        if (openedCardPower === 'Remove_middle') return index === 3;
-        if (openedCardPower === 'Remove_bottom') return index === 6;
-        if (openedCardPower === 'Swap_neighbours') return !isProtected && (!props.cards[index + 1]?.node.is_protected || !props.cards[index - 1]?.node.is_protected);
-        if (openedCardPower === 'Swap_through_one') return !isProtected && (!props.cards[index + 2]?.node.is_protected || !props.cards[index - 2]?.node.is_protected);
-        if (openedCardPower === 'Move_up_by_two') return !isProtected && (!props.cards[index + 1]?.node.is_protected || !props.cards[index + 2]?.node.is_protected);
-        if (openedCardPower === 'Move_down_by_two') return !isProtected && (!props.cards[index - 1]?.node.is_protected || !props.cards[index - 2]?.node.is_protected);
+        switch (openedCardPower) {
+          case 'Protect': return !isProtected;
+          case 'Remove_top': return index === 0;
+          case 'Remove_middle': return index === 3;
+          case 'Remove_bottom': return index === 6;
+          case 'Swap_neighbours': return !isProtected && (!props.cards[index + 1]?.node.is_protected || !props.cards[index - 1]?.node.is_protected);
+          case 'Swap_through_one': return !isProtected && (!props.cards[index + 2]?.node.is_protected || !props.cards[index - 2]?.node.is_protected);
+          case 'Move_up_by_two': return !isProtected && (!props.cards[index + 1]?.node.is_protected || !props.cards[index + 2]?.node.is_protected);
+          case 'Move_down_by_two': return !isProtected && (!props.cards[index - 1]?.node.is_protected || !props.cards[index - 2]?.node.is_protected);
+          default: {
+            const unhandledPower: never = openedCardPower;
+            throw new Error(`Unhandled power "${unhandledPower}"`);
+          }
+        }
       } else {
-        if (openedCardPower === 'Protect') return Math.abs(selectedCardIndex - index) === 1;
-        if (openedCardPower === 'Swap_neighbours') return !isProtected && Math.abs(selectedCardIndex - index) === 1;
-        if (openedCardPower === 'Swap_through_one') return !isProtected && Math.abs(selectedCardIndex - index) === 2;
-        throw new Error(`Action for opened card power "${openedCardPower}" can't have second step`);
+        switch (openedCardPower) {
+          case 'Protect': return Math.abs(selectedCardIndex - index) === 1
+          case 'Swap_neighbours': return !isProtected && Math.abs(selectedCardIndex - index) === 1
+          case 'Swap_through_one':  return !isProtected && Math.abs(selectedCardIndex - index) === 2
+          default: throw new Error(`Action for opened card power "${openedCardPower}" can't have second step`);
+        }
       }
     }
     return false;
