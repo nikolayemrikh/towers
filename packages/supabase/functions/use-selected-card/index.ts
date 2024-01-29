@@ -63,10 +63,36 @@ Deno.serve(async (req: Request) => {
 
   switch (resPower) {
     case 'Protect': {
-      if (Math.abs(res.fisrtCardIndex - res.secondCardIndex) !== 1) throw new Error('Can not protect cards that are not next to each other');      
+      if (Math.abs(res.fisrtCardIndex - res.secondCardIndex) !== 1) throw new Error('Can not protect cards that are not next to each other');
+      const firstCard = cardsInTower[res.fisrtCardIndex];
+      const secondCard = cardsInTower[res.secondCardIndex];
       const [{error: updateCardInTowerFirstError }, {error: updateCardInTowerSecondError}] = await Promise.all([
-        await supabaseServiceClient.from('card_in_tower').update({ is_protected: true }).eq('card_tower_id', cardTower.id).eq('id', cardsInTower[res.fisrtCardIndex].id),
-        await supabaseServiceClient.from('card_in_tower').update({ is_protected: true }).eq('card_tower_id', cardTower.id).eq('id', cardsInTower[res.secondCardIndex].id)
+        await supabaseServiceClient.from('card_in_tower').update({ is_protected: true }).eq('card_tower_id', cardTower.id).eq('id', firstCard.id),
+        await supabaseServiceClient.from('card_in_tower').update({ is_protected: true }).eq('card_tower_id', cardTower.id).eq('id', secondCard.id)
+      ]);
+      if (updateCardInTowerFirstError) throw new Error(updateCardInTowerFirstError.message);
+      if (updateCardInTowerSecondError) throw new Error(updateCardInTowerSecondError.message);
+      break;
+    }
+    case 'Swap_neighbours': {
+      if (Math.abs(res.fisrtCardIndex - res.secondCardIndex) !== 1) throw new Error('Can not swap cards that are not next to each other'); 
+      const firstCard = cardsInTower[res.fisrtCardIndex];
+      const secondCard = cardsInTower[res.secondCardIndex];
+      const [{error: updateCardInTowerFirstError }, {error: updateCardInTowerSecondError}] = await Promise.all([
+        await supabaseServiceClient.from('card_in_tower').update({ card_number: secondCard.card_number }).eq('card_tower_id', cardTower.id).eq('id', firstCard.id),
+        await supabaseServiceClient.from('card_in_tower').update({ card_number: firstCard.card_number }).eq('card_tower_id', cardTower.id).eq('id', secondCard.id)
+      ]);
+      if (updateCardInTowerFirstError) throw new Error(updateCardInTowerFirstError.message);
+      if (updateCardInTowerSecondError) throw new Error(updateCardInTowerSecondError.message);
+      break;
+    }
+    case 'Swap_through_one': {
+      if (Math.abs(res.fisrtCardIndex - res.secondCardIndex) !== 2) throw new Error('Can not swap cards that are not next to each other through one card'); 
+      const firstCard = cardsInTower[res.fisrtCardIndex];
+      const secondCard = cardsInTower[res.secondCardIndex];
+      const [{error: updateCardInTowerFirstError }, {error: updateCardInTowerSecondError}] = await Promise.all([
+        await supabaseServiceClient.from('card_in_tower').update({ card_number: secondCard.card_number }).eq('card_tower_id', cardTower.id).eq('id', firstCard.id),
+        await supabaseServiceClient.from('card_in_tower').update({ card_number: firstCard.card_number }).eq('card_tower_id', cardTower.id).eq('id', secondCard.id)
       ]);
       if (updateCardInTowerFirstError) throw new Error(updateCardInTowerFirstError.message);
       if (updateCardInTowerSecondError) throw new Error(updateCardInTowerSecondError.message);
