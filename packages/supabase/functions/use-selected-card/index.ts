@@ -100,8 +100,8 @@ Deno.serve(async (req: Request) => {
     }
     case 'Move_down_by_two': {
       const card = cardsInTower[res.cardIndex];
-      const nextCard1 = cardsInTower[res.cardIndex + 1];
-      const nextCard2 = cardsInTower[res.cardIndex + 2];
+      const nextCard1 = cardsInTower[res.cardIndex - 1];
+      const nextCard2 = cardsInTower[res.cardIndex - 2];
       if (!nextCard1 || !nextCard2) throw new Error('Can not move down by two cards because there are not enough cards below');
       const [{error: updateCardInTowerFirstError }, {error: updateCardInTowerSecondError}, {error: updateCardInTowerThirdError}] = await Promise.all([
         await supabaseServiceClient.from('card_in_tower').update({ card_number: nextCard1.card_number }).eq('card_tower_id', cardTower.id).eq('id', card.id),
@@ -115,8 +115,8 @@ Deno.serve(async (req: Request) => {
     }
     case 'Move_up_by_two': {
       const card = cardsInTower[res.cardIndex];
-      const nextCard1 = cardsInTower[res.cardIndex - 1];
-      const nextCard2 = cardsInTower[res.cardIndex - 2];
+      const nextCard1 = cardsInTower[res.cardIndex + 1];
+      const nextCard2 = cardsInTower[res.cardIndex + 2];
       if (!nextCard1 || !nextCard2) throw new Error('Can not move down by two cards because there are not enough cards above');
       const [{error: updateCardInTowerFirstError }, {error: updateCardInTowerSecondError}, {error: updateCardInTowerThirdError}] = await Promise.all([
         await supabaseServiceClient.from('card_in_tower').update({ card_number: nextCard1.card_number }).eq('card_tower_id', cardTower.id).eq('id', card.id),

@@ -102,8 +102,8 @@ export const UserTower = (props: {
           case 'Remove_bottom': return index === 6;
           case 'Swap_neighbours': return !isProtected && (!props.cards[index + 1]?.node.is_protected || !props.cards[index - 1]?.node.is_protected);
           case 'Swap_through_one': return !isProtected && (!props.cards[index + 2]?.node.is_protected || !props.cards[index - 2]?.node.is_protected);
-          case 'Move_up_by_two': return !!props.cards[index - 2] && !isProtected && (!props.cards[index + 1]?.node.is_protected || !props.cards[index + 2]?.node.is_protected);
-          case 'Move_down_by_two': return !!props.cards[index + 2] && !isProtected && (!props.cards[index - 1]?.node.is_protected || !props.cards[index - 2]?.node.is_protected);
+          case 'Move_up_by_two': return !!props.cards[index + 2] && !isProtected && (!props.cards[index + 1]?.node.is_protected || !props.cards[index + 2]?.node.is_protected);
+          case 'Move_down_by_two': return !!props.cards[index - 2] && !isProtected && (!props.cards[index - 1]?.node.is_protected || !props.cards[index - 2]?.node.is_protected);
           default: {
             const unhandledPower: never = openedCardPower;
             throw new Error(`Unhandled power "${unhandledPower}"`);
@@ -121,7 +121,7 @@ export const UserTower = (props: {
     return false;
   }
 
-  return <div style={{display: 'flex', "flex-direction": 'column', gap: '8px'}}>
+  return <div style={{display: 'flex', "flex-direction": 'column-reverse', gap: '8px'}}>
     <For each={props.cards}>{(card, index) => {
       const power = props.cardVariants.get(card.node.card_number)!
 
