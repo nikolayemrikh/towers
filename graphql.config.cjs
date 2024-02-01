@@ -3,7 +3,7 @@ module.exports = {
   projects: {
     'towers': {
       schema: ['http://localhost:54321/graphql/v1'],
-      documents: ['./src/**/*.{ts,tsx}'],
+      documents: ['./packages/front/src/**/*.{ts,tsx}'],
     },
   },
 };

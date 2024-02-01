@@ -128,8 +128,15 @@ Deno.serve(async (req: Request) => {
       if (updateCardInTowerThirdError) throw new Error(updateCardInTowerThirdError.message);
       break;
     }
-    case 'Remove_top':
+    case 'Remove_top': {
+      const card = cardsInTower[cardsInTower.length - 1];
+      const results = await Promise.all(
+        cardTowers.map(tower => supabaseServiceClient.from('card_in_tower').update({ card_number: card.card_number }).eq('card_tower_id', tower.id).eq('id', card.id))
+      );
+      // @TODO remove one by one and check after each update if there are no more cards in tower
+      // then move cards into the deck
       break;
+    }
     case 'Remove_middle':
       break;
     case 'Remove_bottom':

@@ -177,7 +177,7 @@ export const Board = () => {
       <Match when={boardQuery.isSuccess && boardQuery.isSuccess && cardVariantsQuery.isSuccess}>
         <div>
           <div>Deck</div>
-          <button onClick={() => pullCardMutation.mutate(id)}>pull card</button>
+          {!!boardQuery.data?.edges[0].node.card_in_board_deckCollection?.edges.length && <button onClick={() => pullCardMutation.mutate(id)}>pull card</button>}
           <div>Pulled card</div>
           {renderPulledCard()}
           <div>Opened cards</div>

@@ -28,6 +28,14 @@ export const boardQueryDocument = graphql(/* GraphQL */ `
               }
             }
           }
+          card_in_board_deckCollection {
+            edges {
+              node {
+                id
+                card_number
+              }
+            }
+          }
           card_in_board_openedCollection {
             edges {
               node {
