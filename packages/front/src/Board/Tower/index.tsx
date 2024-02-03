@@ -1,3 +1,5 @@
+import { FC } from 'react';
+
 import { BoardCollectionQuery } from '@front/__generated__/graphql/graphql';
 
 import { TCardPower, TCardVariants } from '../fetchers/fetchCardVariants/types';
@@ -20,13 +22,14 @@ type TCards = TN<
   >[0]['node']['card_in_towerCollection']
 >['edges'];
 
-export const Tower = (props: { id: string; userId: string; cards: TCards; cardVariants: TCardVariants }) => {
+export const Tower: FC<{ id: string; userId: string; cards: TCards; cardVariants: TCardVariants }> = (props) => {
+  const { id, userId, cards, cardVariants } = props;
   return (
     <div style={{ display: 'flex', 'flexDirection': 'column' }}>
-      {props.cards.map((card) => {
+      {cards.map((card) => {
         return (
           <div key={card.node.id}>
-            card {card.node.card_number} ({PowerTitle[props.cardVariants.get(card.node.card_number)!]})
+            card {card.node.card_number} ({PowerTitle[cardVariants.get(card.node.card_number)!]})
           </div>
         );
       })}

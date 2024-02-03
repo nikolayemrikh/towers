@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { FC, useState } from 'react';
 
 import { BoardCollectionQuery } from '@front/__generated__/graphql/graphql';
 import { TUseSelectedCardRequest } from '@supa/functions/_shared/use-selected-card-types';
@@ -17,7 +17,7 @@ type TCards = TN<
   >[0]['node']['card_in_towerCollection']
 >['edges'];
 
-export const UserTower = (props: {
+export const UserTower: FC<{
   id: string;
   boardId: string;
   userId: string;
@@ -25,30 +25,31 @@ export const UserTower = (props: {
   cardVariants: TCardVariants;
   openedCardToUse: number | null;
   pulledCardToChange: number | null;
-}) => {
+}> = (props) => {
+  const { id, userId, boardId, cards, cardVariants, openedCardToUse, pulledCardToChange } = props;
   const [selectedCardIndexAccessor, setSelectedCardIndex] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
   const changeCardToPulledMutation = useMutation({
     mutationFn: (index: number) =>
-      supabase.functions.invoke('change-card-to-pulled', { body: { boardId: props.boardId, index } }),
+      supabase.functions.invoke('change-card-to-pulled', { body: { boardId: boardId, index } }),
     onSuccess: () =>
-      queryClient.refetchQueries({ queryKey: [getGraphqlQueryKey(boardQueryDocument), props.id], exact: true }),
+      queryClient.refetchQueries({ queryKey: [getGraphqlQueryKey(boardQueryDocument), id], exact: true }),
   });
 
   const useSelectedCardMutation = useMutation({
     mutationFn: (payload: TUseSelectedCardRequest) => supabase.functions.invoke('use-selected-card', { body: payload }),
     onSuccess: () =>
-      queryClient.refetchQueries({ queryKey: [getGraphqlQueryKey(boardQueryDocument), props.id], exact: true }),
+      queryClient.refetchQueries({ queryKey: [getGraphqlQueryKey(boardQueryDocument), id], exact: true }),
   });
 
   const handleCardClick = async (index: number) => {
-    if (props.pulledCardToChange) {
+    if (pulledCardToChange) {
       changeCardToPulledMutation.mutate(index);
       return;
     }
-    if (!props.openedCardToUse) throw new Error('Can not make an action when there is no opened card to use');
-    const openedCardPower = props.cardVariants.get(props.openedCardToUse)!;
+    if (!openedCardToUse) throw new Error('Can not make an action when there is no opened card to use');
+    const openedCardPower = cardVariants.get(openedCardToUse)!;
     const selectedCardIndex = selectedCardIndexAccessor;
     if (selectedCardIndex === null) {
       switch (openedCardPower) {
@@ -59,16 +60,16 @@ export const UserTower = (props: {
         case 'Swap_through_one':
           return setSelectedCardIndex(index);
         case 'Remove_top':
-          return useSelectedCardMutation.mutate({ boardId: props.boardId, power: 'Remove_top' });
+          return useSelectedCardMutation.mutate({ boardId: boardId, power: 'Remove_top' });
         case 'Remove_middle':
-          return useSelectedCardMutation.mutate({ boardId: props.boardId, power: 'Remove_middle' });
+          return useSelectedCardMutation.mutate({ boardId: boardId, power: 'Remove_middle' });
         case 'Remove_bottom':
-          return useSelectedCardMutation.mutate({ boardId: props.boardId, power: 'Remove_bottom' });
+          return useSelectedCardMutation.mutate({ boardId: boardId, power: 'Remove_bottom' });
         case 'Move_up_by_two':
-          return useSelectedCardMutation.mutate({ boardId: props.boardId, power: 'Move_up_by_two', cardIndex: index });
+          return useSelectedCardMutation.mutate({ boardId: boardId, power: 'Move_up_by_two', cardIndex: index });
         case 'Move_down_by_two':
           return useSelectedCardMutation.mutate({
-            boardId: props.boardId,
+            boardId: boardId,
             power: 'Move_down_by_two',
             cardIndex: index,
           });
@@ -82,21 +83,21 @@ export const UserTower = (props: {
         switch (openedCardPower) {
           case 'Protect':
             return useSelectedCardMutation.mutate({
-              boardId: props.boardId,
+              boardId: boardId,
               power: 'Protect',
               fisrtCardIndex: selectedCardIndex,
               secondCardIndex: index,
             });
           case 'Swap_neighbours':
             return useSelectedCardMutation.mutate({
-              boardId: props.boardId,
+              boardId: boardId,
               power: 'Swap_neighbours',
               fisrtCardIndex: selectedCardIndex,
               secondCardIndex: index,
             });
           case 'Swap_through_one':
             return useSelectedCardMutation.mutate({
-              boardId: props.boardId,
+              boardId: boardId,
               power: 'Swap_through_one',
               fisrtCardIndex: selectedCardIndex,
               secondCardIndex: index,
@@ -116,9 +117,9 @@ export const UserTower = (props: {
     index: number,
     isProtected: boolean
   ): boolean => {
-    if (props.pulledCardToChange) return true;
-    if (props.openedCardToUse) {
-      const openedCardPower = props.cardVariants.get(props.openedCardToUse)!;
+    if (pulledCardToChange) return true;
+    if (openedCardToUse) {
+      const openedCardPower = cardVariants.get(openedCardToUse)!;
       const selectedCardIndex = selectedCardIndexAccessor;
       if (selectedCardIndex === null) {
         switch (openedCardPower) {
@@ -131,24 +132,20 @@ export const UserTower = (props: {
           case 'Remove_bottom':
             return index === 6;
           case 'Swap_neighbours':
-            return (
-              !isProtected && (!props.cards[index + 1]?.node.is_protected || !props.cards[index - 1]?.node.is_protected)
-            );
+            return !isProtected && (!cards[index + 1]?.node.is_protected || !cards[index - 1]?.node.is_protected);
           case 'Swap_through_one':
-            return (
-              !isProtected && (!props.cards[index + 2]?.node.is_protected || !props.cards[index - 2]?.node.is_protected)
-            );
+            return !isProtected && (!cards[index + 2]?.node.is_protected || !cards[index - 2]?.node.is_protected);
           case 'Move_up_by_two':
             return (
-              !!props.cards[index + 2] &&
+              !!cards[index + 2] &&
               !isProtected &&
-              (!props.cards[index + 1]?.node.is_protected || !props.cards[index + 2]?.node.is_protected)
+              (!cards[index + 1]?.node.is_protected || !cards[index + 2]?.node.is_protected)
             );
           case 'Move_down_by_two':
             return (
-              !!props.cards[index - 2] &&
+              !!cards[index - 2] &&
               !isProtected &&
-              (!props.cards[index - 1]?.node.is_protected || !props.cards[index - 2]?.node.is_protected)
+              (!cards[index - 1]?.node.is_protected || !cards[index - 2]?.node.is_protected)
             );
           default: {
             const unhandledPower: never = openedCardPower;
@@ -173,8 +170,8 @@ export const UserTower = (props: {
 
   return (
     <div style={{ display: 'flex', 'flexDirection': 'column-reverse', gap: '8px' }}>
-      {props.cards.map((card, index) => {
-        const power = props.cardVariants.get(card.node.card_number)!;
+      {cards.map((card, index) => {
+        const power = cardVariants.get(card.node.card_number)!;
 
         return (
           <Card
