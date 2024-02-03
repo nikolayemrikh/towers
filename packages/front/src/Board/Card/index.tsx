@@ -9,7 +9,7 @@ const PowerTitle: Record<TCardPower, string> = {
   Remove_top: 'Remove top',
   Swap_neighbours: 'Swap neighbours',
   Swap_through_one: 'Swap through one',
-}
+};
 
 export const Card = (props: {
   number: number;
@@ -23,13 +23,13 @@ export const Card = (props: {
       onClick={() => props.onClick?.()}
       style={{
         display: 'flex',
-        "flex-direction": 'column',
+        'flexDirection': 'column',
         padding: '10px',
-        "background-color": props.isActionAvailable ? 'purple' : 'black',
+        'backgroundColor': props.isActionAvailable ? 'purple' : 'black',
       }}
     >
       <div>card {props.number}</div>
-        <div>({PowerTitle[props.power]})</div>
+      <div>({PowerTitle[props.power]})</div>
     </div>
-  )
-}
+  );
+};

@@ -3,23 +3,21 @@
 // This enables autocomplete, go to definition, etc.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.1';
-import { Database } from '../_shared/database.types.ts';
 
-console.log("Hello from Functions!")
+import { Database } from '../_shared/database-types.ts';
+
+console.log('Hello from Functions!');
 
 Deno.serve(async (req) => {
-  const supabaseClient = createClient<Database>(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!
-  );
+  const supabaseClient = createClient<Database>(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!);
 
-  const {data} = await supabaseClient.auth.signInWithPassword({email: 'redishko@gmail.com', password: '789pP369ne'})
+  const { data } = await supabaseClient.auth.signInWithPassword({
+    email: 'redishko@gmail.com',
+    password: '789pP369ne',
+  });
 
-  return new Response(
-    JSON.stringify(data.session),
-    { headers: { "Content-Type": "application/json" } },
-  )
-})
+  return new Response(JSON.stringify(data.session), { headers: { 'Content-Type': 'application/json' } });
+});
 
 /* To invoke locally:
 

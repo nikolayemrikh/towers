@@ -1,98 +1,138 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Database } from '../_shared/database.types.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 import { corsHeaders } from '../_shared/cors.ts';
-import { TUseSelectedCardRequest } from '../_shared/use-selected-card.types.ts';
+import { Database } from '../_shared/database-types.ts';
+import { TUseSelectedCardRequest } from '../_shared/use-selected-card-types.ts';
 // import { TUseSelectedCardRequest } from '../../../shared/src/_supabase/use-selected-card.types.ts';
 // Follow this setup guide to integrate the Deno language server with your editor:
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.
 
-console.log("Hello from Functions!")
-
+console.log('Hello from Functions!');
 
 Deno.serve(async (req: Request) => {
   // This is needed if you're planning to invoke your function from a browser.
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
   const authHeader = req.headers.get('Authorization')!;
-  const res = await req.json() as TUseSelectedCardRequest;
+  const res = (await req.json()) as TUseSelectedCardRequest;
 
   const { boardId } = res;
 
-  const supabaseClient = createClient<Database>(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
-    { global: { headers: { Authorization: authHeader } } }
-  );
-  
+  const supabaseClient = createClient<Database>(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    global: { headers: { Authorization: authHeader } },
+  });
+
   const supabaseServiceClient = createClient<Database>(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
 
-  const { data } = await supabaseClient.auth.getUser()
+  const { data } = await supabaseClient.auth.getUser();
   const user = data.user;
   if (!user) throw new Error('User not found');
 
-  const { data: boards, error: boardsError } = await supabaseServiceClient.from('board').select('*').eq('id', boardId).eq('turn_user_id', user.id);
+  const { data: boards, error: boardsError } = await supabaseServiceClient
+    .from('board')
+    .select('*')
+    .eq('id', boardId)
+    .eq('turn_user_id', user.id);
   if (boardsError) throw new Error(boardsError.message);
   const board = boards[0];
-  
+
   const openedCardNumberToUse = board.opened_card_number_to_use;
   if (!openedCardNumberToUse) throw new Error('No card to use since "opened_card_number_to_use" is not set');
 
-  const {data: cardVariants, error: cardVariantsSelectError} = await supabaseServiceClient.from('card_variant').select('*');
+  const { data: cardVariants, error: cardVariantsSelectError } = await supabaseServiceClient
+    .from('card_variant')
+    .select('*');
   if (cardVariantsSelectError) throw new Error(cardVariantsSelectError.message);
 
-  const cardVariant = cardVariants.find(cardVariant => cardVariant.number === openedCardNumberToUse);
+  const cardVariant = cardVariants.find((cardVariant) => cardVariant.number === openedCardNumberToUse);
   if (!cardVariant) throw new Error(`Card variant not found for card with number "${openedCardNumberToUse}"`);
 
   const power = cardVariant.power;
-  
-  const resPower = res.power;
-  if (resPower !== power) throw new Error(`Can not use card with power "${power}" when power "${res.power}" is requested`);
 
-  const { data: cardTowers, error: cardTowersError } = await supabaseServiceClient.from('card_tower').select('*').eq('user_id', user.id).eq('board_id', boardId);
+  const resPower = res.power;
+  if (resPower !== power)
+    throw new Error(`Can not use card with power "${power}" when power "${res.power}" is requested`);
+
+  const { data: cardTowers, error: cardTowersError } = await supabaseServiceClient
+    .from('card_tower')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('board_id', boardId);
   if (cardTowersError) throw new Error(cardTowersError.message);
   const cardTower = cardTowers[0];
   if (!cardTower) throw new Error('Card tower for current user not found');
 
-  const { data: cardsInTower, error: cardsInTowerError } = await supabaseServiceClient.from('card_in_tower').select('*').eq('card_tower_id', cardTower.id).order('id', { ascending: true });;
+  const { data: cardsInTower, error: cardsInTowerError } = await supabaseServiceClient
+    .from('card_in_tower')
+    .select('*')
+    .eq('card_tower_id', cardTower.id)
+    .order('id', { ascending: true });
   if (cardsInTowerError) throw new Error(cardsInTowerError.message);
 
   switch (resPower) {
     case 'Protect': {
-      if (Math.abs(res.fisrtCardIndex - res.secondCardIndex) !== 1) throw new Error('Can not protect cards that are not next to each other');
+      if (Math.abs(res.fisrtCardIndex - res.secondCardIndex) !== 1)
+        throw new Error('Can not protect cards that are not next to each other');
       const firstCard = cardsInTower[res.fisrtCardIndex];
       const secondCard = cardsInTower[res.secondCardIndex];
-      const [{error: updateCardInTowerFirstError }, {error: updateCardInTowerSecondError}] = await Promise.all([
-        await supabaseServiceClient.from('card_in_tower').update({ is_protected: true }).eq('card_tower_id', cardTower.id).eq('id', firstCard.id),
-        await supabaseServiceClient.from('card_in_tower').update({ is_protected: true }).eq('card_tower_id', cardTower.id).eq('id', secondCard.id)
+      const [{ error: updateCardInTowerFirstError }, { error: updateCardInTowerSecondError }] = await Promise.all([
+        await supabaseServiceClient
+          .from('card_in_tower')
+          .update({ is_protected: true })
+          .eq('card_tower_id', cardTower.id)
+          .eq('id', firstCard.id),
+        await supabaseServiceClient
+          .from('card_in_tower')
+          .update({ is_protected: true })
+          .eq('card_tower_id', cardTower.id)
+          .eq('id', secondCard.id),
       ]);
       if (updateCardInTowerFirstError) throw new Error(updateCardInTowerFirstError.message);
       if (updateCardInTowerSecondError) throw new Error(updateCardInTowerSecondError.message);
       break;
     }
     case 'Swap_neighbours': {
-      if (Math.abs(res.fisrtCardIndex - res.secondCardIndex) !== 1) throw new Error('Can not swap cards that are not next to each other'); 
+      if (Math.abs(res.fisrtCardIndex - res.secondCardIndex) !== 1)
+        throw new Error('Can not swap cards that are not next to each other');
       const firstCard = cardsInTower[res.fisrtCardIndex];
       const secondCard = cardsInTower[res.secondCardIndex];
-      const [{error: updateCardInTowerFirstError }, {error: updateCardInTowerSecondError}] = await Promise.all([
-        await supabaseServiceClient.from('card_in_tower').update({ card_number: secondCard.card_number }).eq('card_tower_id', cardTower.id).eq('id', firstCard.id),
-        await supabaseServiceClient.from('card_in_tower').update({ card_number: firstCard.card_number }).eq('card_tower_id', cardTower.id).eq('id', secondCard.id)
+      const [{ error: updateCardInTowerFirstError }, { error: updateCardInTowerSecondError }] = await Promise.all([
+        await supabaseServiceClient
+          .from('card_in_tower')
+          .update({ card_number: secondCard.card_number })
+          .eq('card_tower_id', cardTower.id)
+          .eq('id', firstCard.id),
+        await supabaseServiceClient
+          .from('card_in_tower')
+          .update({ card_number: firstCard.card_number })
+          .eq('card_tower_id', cardTower.id)
+          .eq('id', secondCard.id),
       ]);
       if (updateCardInTowerFirstError) throw new Error(updateCardInTowerFirstError.message);
       if (updateCardInTowerSecondError) throw new Error(updateCardInTowerSecondError.message);
       break;
     }
     case 'Swap_through_one': {
-      if (Math.abs(res.fisrtCardIndex - res.secondCardIndex) !== 2) throw new Error('Can not swap cards that are not next to each other through one card'); 
+      if (Math.abs(res.fisrtCardIndex - res.secondCardIndex) !== 2)
+        throw new Error('Can not swap cards that are not next to each other through one card');
       const firstCard = cardsInTower[res.fisrtCardIndex];
       const secondCard = cardsInTower[res.secondCardIndex];
-      const [{error: updateCardInTowerFirstError }, {error: updateCardInTowerSecondError}] = await Promise.all([
-        await supabaseServiceClient.from('card_in_tower').update({ card_number: secondCard.card_number }).eq('card_tower_id', cardTower.id).eq('id', firstCard.id),
-        await supabaseServiceClient.from('card_in_tower').update({ card_number: firstCard.card_number }).eq('card_tower_id', cardTower.id).eq('id', secondCard.id)
+      const [{ error: updateCardInTowerFirstError }, { error: updateCardInTowerSecondError }] = await Promise.all([
+        await supabaseServiceClient
+          .from('card_in_tower')
+          .update({ card_number: secondCard.card_number })
+          .eq('card_tower_id', cardTower.id)
+          .eq('id', firstCard.id),
+        await supabaseServiceClient
+          .from('card_in_tower')
+          .update({ card_number: firstCard.card_number })
+          .eq('card_tower_id', cardTower.id)
+          .eq('id', secondCard.id),
       ]);
       if (updateCardInTowerFirstError) throw new Error(updateCardInTowerFirstError.message);
       if (updateCardInTowerSecondError) throw new Error(updateCardInTowerSecondError.message);
@@ -102,11 +142,28 @@ Deno.serve(async (req: Request) => {
       const card = cardsInTower[res.cardIndex];
       const nextCard1 = cardsInTower[res.cardIndex - 1];
       const nextCard2 = cardsInTower[res.cardIndex - 2];
-      if (!nextCard1 || !nextCard2) throw new Error('Can not move down by two cards because there are not enough cards below');
-      const [{error: updateCardInTowerFirstError }, {error: updateCardInTowerSecondError}, {error: updateCardInTowerThirdError}] = await Promise.all([
-        await supabaseServiceClient.from('card_in_tower').update({ card_number: nextCard1.card_number }).eq('card_tower_id', cardTower.id).eq('id', card.id),
-        await supabaseServiceClient.from('card_in_tower').update({ card_number: nextCard2.card_number }).eq('card_tower_id', cardTower.id).eq('id', nextCard1.id),
-        await supabaseServiceClient.from('card_in_tower').update({ card_number: card.card_number }).eq('card_tower_id', cardTower.id).eq('id', nextCard2.id)
+      if (!nextCard1 || !nextCard2)
+        throw new Error('Can not move down by two cards because there are not enough cards below');
+      const [
+        { error: updateCardInTowerFirstError },
+        { error: updateCardInTowerSecondError },
+        { error: updateCardInTowerThirdError },
+      ] = await Promise.all([
+        await supabaseServiceClient
+          .from('card_in_tower')
+          .update({ card_number: nextCard1.card_number })
+          .eq('card_tower_id', cardTower.id)
+          .eq('id', card.id),
+        await supabaseServiceClient
+          .from('card_in_tower')
+          .update({ card_number: nextCard2.card_number })
+          .eq('card_tower_id', cardTower.id)
+          .eq('id', nextCard1.id),
+        await supabaseServiceClient
+          .from('card_in_tower')
+          .update({ card_number: card.card_number })
+          .eq('card_tower_id', cardTower.id)
+          .eq('id', nextCard2.id),
       ]);
       if (updateCardInTowerFirstError) throw new Error(updateCardInTowerFirstError.message);
       if (updateCardInTowerSecondError) throw new Error(updateCardInTowerSecondError.message);
@@ -117,11 +174,28 @@ Deno.serve(async (req: Request) => {
       const card = cardsInTower[res.cardIndex];
       const nextCard1 = cardsInTower[res.cardIndex + 1];
       const nextCard2 = cardsInTower[res.cardIndex + 2];
-      if (!nextCard1 || !nextCard2) throw new Error('Can not move down by two cards because there are not enough cards above');
-      const [{error: updateCardInTowerFirstError }, {error: updateCardInTowerSecondError}, {error: updateCardInTowerThirdError}] = await Promise.all([
-        await supabaseServiceClient.from('card_in_tower').update({ card_number: nextCard1.card_number }).eq('card_tower_id', cardTower.id).eq('id', card.id),
-        await supabaseServiceClient.from('card_in_tower').update({ card_number: nextCard2.card_number }).eq('card_tower_id', cardTower.id).eq('id', nextCard1.id),
-        await supabaseServiceClient.from('card_in_tower').update({ card_number: card.card_number }).eq('card_tower_id', cardTower.id).eq('id', nextCard2.id)
+      if (!nextCard1 || !nextCard2)
+        throw new Error('Can not move down by two cards because there are not enough cards above');
+      const [
+        { error: updateCardInTowerFirstError },
+        { error: updateCardInTowerSecondError },
+        { error: updateCardInTowerThirdError },
+      ] = await Promise.all([
+        await supabaseServiceClient
+          .from('card_in_tower')
+          .update({ card_number: nextCard1.card_number })
+          .eq('card_tower_id', cardTower.id)
+          .eq('id', card.id),
+        await supabaseServiceClient
+          .from('card_in_tower')
+          .update({ card_number: nextCard2.card_number })
+          .eq('card_tower_id', cardTower.id)
+          .eq('id', nextCard1.id),
+        await supabaseServiceClient
+          .from('card_in_tower')
+          .update({ card_number: card.card_number })
+          .eq('card_tower_id', cardTower.id)
+          .eq('id', nextCard2.id),
       ]);
       if (updateCardInTowerFirstError) throw new Error(updateCardInTowerFirstError.message);
       if (updateCardInTowerSecondError) throw new Error(updateCardInTowerSecondError.message);
@@ -131,7 +205,13 @@ Deno.serve(async (req: Request) => {
     case 'Remove_top': {
       const card = cardsInTower[cardsInTower.length - 1];
       const results = await Promise.all(
-        cardTowers.map(tower => supabaseServiceClient.from('card_in_tower').update({ card_number: card.card_number }).eq('card_tower_id', tower.id).eq('id', card.id))
+        cardTowers.map((tower) =>
+          supabaseServiceClient
+            .from('card_in_tower')
+            .update({ card_number: card.card_number })
+            .eq('card_tower_id', tower.id)
+            .eq('id', card.id)
+        )
       );
       // @TODO remove one by one and check after each update if there are no more cards in tower
       // then move cards into the deck
@@ -141,22 +221,25 @@ Deno.serve(async (req: Request) => {
       break;
     case 'Remove_bottom':
       break;
-  
+
     default: {
       const unhandledPower: never = resPower;
       throw new Error(`Unhandled power "${unhandledPower}"`);
     }
   }
 
-  const {error: boardUpdateError} = await supabaseServiceClient.from('board').update({ opened_card_number_to_use: null }).eq('id', boardId).eq('turn_user_id', user.id);
+  const { error: boardUpdateError } = await supabaseServiceClient
+    .from('board')
+    .update({ opened_card_number_to_use: null })
+    .eq('id', boardId)
+    .eq('turn_user_id', user.id);
   if (boardUpdateError) throw new Error(boardUpdateError.message);
-
 
   return new Response(JSON.stringify({ ok: 123 }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     status: 200,
-  })
-})
+  });
+});
 
 /* To invoke locally:
 

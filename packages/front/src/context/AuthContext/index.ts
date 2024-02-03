@@ -1,3 +1,3 @@
-import { createContext } from 'solid-js';
+import { createContext } from 'react';
 
-export const AuthContext = createContext<{isAuthenticated: () => boolean}>({isAuthenticated: () => false});
+export const AuthContext = createContext<{ isAuthenticated: boolean }>({ isAuthenticated: false });

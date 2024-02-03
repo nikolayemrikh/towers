@@ -1,45 +1,49 @@
-import { createSignal } from 'solid-js';
-import { supabase } from '../../supabaseClient'
-import { A } from '@solidjs/router';
+import { Link } from 'react-router-dom';
+import { supabase } from '../../supabaseClient';
+import { FC, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 
-export const SignUpPage = () => {
-  const [email, setEmail] = createSignal('');
-  const [password, setPassword] = createSignal('');
+export const SignUpPage: FC = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isError, setIsError] = useState<boolean>(false);
 
-  const signUp = async () => {
-    const { error } = await supabase.auth.signUp({
-      email: email(),
-      password: password()
-    });
-    if (error) {
-      console.error(error);
-    }
-  }
-  
-  return <main>
-    <h1>Sign Up</h1>
-    <div>
-      Already have an account? <A href="/sign-in">Sign in</A>
-    </div>
-    <form onSubmit={(event) => {
-      event.preventDefault();
-      signUp();
-    }}>
+  const mutation = useMutation({
+    mutationFn: () => supabase.auth.signUp({ email, password }),
+    onSuccess: ({ error }) => setIsError(!!error),
+  });
+
+  return (
+    <main>
+      <h1>Sign In</h1>
       <div>
-        <label>
-          Email
-          <input type="email" onChange={(evt) => setEmail(evt.target.value)} />
-        </label>
+        Already have an account? <Link to="/sign-in">Sign in</Link>
       </div>
-      <div>
-        <label>
-          Password
-          <input type="new-password" onChange={(evt) => setPassword(evt.target.value)} />
-        </label>
-      </div>
-      <div>
-        <button type="submit">start</button>
-      </div>
-    </form>
-  </main>;
-}
+      {isError && <div>Sign up unsuccessful</div>}
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          mutation.mutate();
+        }}
+      >
+        <div>
+          <label>
+            Email
+            <input type="email" onChange={(evt) => setEmail(evt.target.value)} />
+          </label>
+        </div>
+        <div>
+          <label>
+            Password
+            <input type="new-password" onChange={(evt) => setPassword(evt.target.value)} />
+          </label>
+        </div>
+        <div>
+          <button type="submit" disabled={mutation.isPending}>
+            Sign in
+          </button>
+        </div>
+      </form>
+    </main>
+  );
+};

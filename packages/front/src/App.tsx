@@ -1,17 +1,22 @@
-import { createSignal, onMount } from 'solid-js';
-import { supabase } from './supabaseClient'
-import { Routes } from './Routes';
+import { FC, useEffect, useState } from 'react';
+import { StrictMode } from 'react';
+
+import { BrowserRouter } from 'react-router-dom';
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 import { AuthContext } from './context/AuthContext';
-import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
+import { Routes } from './Routes';
+import { supabase } from './supabaseClient';
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  const [isInitialized, setIsInitialized] = createSignal(false);
-  const [isAuthenticated, setIsAuthenticated] = createSignal(false);
+export const App: FC = () => {
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  onMount(() => {
-    const checkAuthenticated = async () => {
+  useEffect(() => {
+    (async (): Promise<void> => {
       const { data } = await supabase.auth.getSession();
       setIsAuthenticated(!!data.session);
       setIsInitialized(true);
@@ -19,15 +24,16 @@ const App = () => {
       supabase.auth.onAuthStateChange((_event, session) => {
         setIsAuthenticated(!!session);
       });
-    }
-    checkAuthenticated();
-  });
+    })();
+  }, []);
 
-  return <QueryClientProvider client={queryClient}>
-    <AuthContext.Provider value={{isAuthenticated}}>
-      {isInitialized() ? <Routes /> : <div />}
-    </AuthContext.Provider>
-  </QueryClientProvider>;
-}
-
-export default App
+  return (
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <AuthContext.Provider value={{ isAuthenticated }}>
+          <BrowserRouter>{isInitialized && <Routes />}</BrowserRouter>
+        </AuthContext.Provider>
+      </QueryClientProvider>
+    </StrictMode>
+  );
+};

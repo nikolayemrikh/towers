@@ -1,44 +1,44 @@
-import { Navigate, Route, RouteSectionProps, Router } from '@solidjs/router';
-import { children, useContext } from 'solid-js';
-import { SignUpPage } from '../Auth/SignUpPage';
-import { SignInPage } from '../Auth/SignInPage';
-import { Lobby } from '../Lobby';
+import { FC, useContext } from 'react';
+
+import { Navigate, Outlet, Route, Routes as RouterRoutes } from 'react-router-dom';
+
+import { SignInPage } from '@front/Auth/SignInPage';
+import { SignUpPage } from '@front/Auth/SignUpPage';
+import { Board } from '@front/Board';
+import { Lobby } from '@front/Lobby';
+
 import { AuthContext } from '../context/AuthContext';
-import { Board } from '../Board';
 
-
-const DetectRoute = () => {
+const DetectRoute: FC = () => {
   const { isAuthenticated } = useContext(AuthContext);
 
-  return <div>{isAuthenticated() ? <Navigate href="/lobby" /> : <Navigate href="/sign-in" />}</div>
-}
+  return isAuthenticated ? <Navigate to="/lobby" /> : <Navigate to="/sign-in" />;
+};
 
-const AuthRoute = (props: RouteSectionProps) => {
+const AuthRoute: FC = () => {
   const { isAuthenticated } = useContext(AuthContext);
-  const c = children(() => props.children);
 
-  return <div>{isAuthenticated() ? c() : <Navigate href="/sign-in" />}</div>
-}
+  return isAuthenticated ? <Outlet /> : <Navigate to="/sign-in" />;
+};
 
-const NotAuthenticatedRoute = (props: RouteSectionProps) => {
+const NotAuthenticatedRoute: FC = () => {
   const { isAuthenticated } = useContext(AuthContext);
-  const c = children(() => props.children);
 
-  return <div>{isAuthenticated() ? <Navigate href="/lobby" /> : c()}</div>
-}
+  return isAuthenticated ? <Navigate to="/lobby" /> : <Outlet />;
+};
 
-export const Routes = () => {
+export const Routes: FC = () => {
   return (
-    <Router>
-      <Route component={AuthRoute}>
-        <Route path="/lobby" component={Lobby} />
-        <Route path="/board/:id" component={Board} />
+    <RouterRoutes>
+      <Route element={<AuthRoute />}>
+        <Route path="/lobby" element={<Lobby />} />
+        <Route path="/board/:id" element={<Board />} />
       </Route>
-      <Route component={NotAuthenticatedRoute}>
-        <Route path="/sign-in" component={SignInPage} />
-        <Route path="/sign-up" component={SignUpPage} />
+      <Route element={<NotAuthenticatedRoute />}>
+        <Route path="/sign-in" element={<SignInPage />} />
+        <Route path="/sign-up" element={<SignUpPage />} />
       </Route>
-      <Route path="/*all" component={DetectRoute} />
-    </Router>
-  )
-}
+      <Route path="*" element={<DetectRoute />} />
+    </RouterRoutes>
+  );
+};

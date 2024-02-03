@@ -1,69 +1,85 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Database } from '../_shared/database.types.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 import { corsHeaders } from '../_shared/cors.ts';
+import { Database } from '../_shared/database-types.ts';
 // Follow this setup guide to integrate the Deno language server with your editor:
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.
 
-console.log("Hello from Functions!")
-
+console.log('Hello from Functions!');
 
 Deno.serve(async (req: Request) => {
   // This is needed if you're planning to invoke your function from a browser.
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
   const authHeader = req.headers.get('Authorization')!;
-  const { boardId, index } = await req.json() as { boardId: number; index: number };
+  const { boardId, index } = (await req.json()) as { boardId: number; index: number };
 
-  const supabaseClient = createClient<Database>(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
-    { global: { headers: { Authorization: authHeader } } }
-  );
-  
+  const supabaseClient = createClient<Database>(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    global: { headers: { Authorization: authHeader } },
+  });
+
   const supabaseServiceClient = createClient<Database>(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  );  
+  );
 
-  const { data } = await supabaseClient.auth.getUser()
+  const { data } = await supabaseClient.auth.getUser();
   const user = data.user;
   if (!user) throw new Error('User not found');
 
-  const { data: cardTowers, error: cardTowersError } = await supabaseServiceClient.from('card_tower').select('*').eq('user_id', user.id).eq('board_id', boardId);
+  const { data: cardTowers, error: cardTowersError } = await supabaseServiceClient
+    .from('card_tower')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('board_id', boardId);
   if (cardTowersError) throw new Error(cardTowersError.message);
   const cardTower = cardTowers[0];
   if (!cardTower) throw new Error('Card tower for current user not found');
 
-  const { data: cardsInTower, error: cardsInTowerError } = await supabaseServiceClient.from('card_in_tower').select('*').eq('card_tower_id', cardTower.id).order('id', { ascending: true });
+  const { data: cardsInTower, error: cardsInTowerError } = await supabaseServiceClient
+    .from('card_in_tower')
+    .select('*')
+    .eq('card_tower_id', cardTower.id)
+    .order('id', { ascending: true });
   if (cardsInTowerError) throw new Error(cardsInTowerError.message);
 
   const cardToChange = cardsInTower[index];
-  
-  const { data: boards, error: boardsError } = await supabaseServiceClient.from('board').select('*').eq('id', boardId).eq('turn_user_id', user.id);
+
+  const { data: boards, error: boardsError } = await supabaseServiceClient
+    .from('board')
+    .select('*')
+    .eq('id', boardId)
+    .eq('turn_user_id', user.id);
   if (boardsError) throw new Error(boardsError.message);
   const board = boards[0];
-  
-  
+
   const pulledCardNumberToChange = board.pulled_card_number_to_change;
   if (!pulledCardNumberToChange) throw new Error('Can not chage card when "pulled_card_number_to_change" is not set');
 
-  const { error: cardsInTowersUpdateError } = await supabaseServiceClient.from('card_in_tower').update({ card_number: pulledCardNumberToChange }).eq('id', cardToChange.id);
+  const { error: cardsInTowersUpdateError } = await supabaseServiceClient
+    .from('card_in_tower')
+    .update({ card_number: pulledCardNumberToChange })
+    .eq('id', cardToChange.id);
   if (cardsInTowersUpdateError) throw new Error(cardsInTowersUpdateError.message);
 
-  const { error: boardsUpdateError } = await supabaseServiceClient.from('board').update({ pulled_card_number_to_change: null }).eq('id', boardId);
+  const { error: boardsUpdateError } = await supabaseServiceClient
+    .from('board')
+    .update({ pulled_card_number_to_change: null })
+    .eq('id', boardId);
   if (boardsUpdateError) throw new Error(boardsUpdateError.message);
-  
-  const { error: cardsInBoardOpenedError } = await supabaseServiceClient.from('card_in_board_opened').insert({ board_id: boardId, card_number: cardToChange.card_number });
-  if (cardsInBoardOpenedError) throw new Error(cardsInBoardOpenedError.message);
 
+  const { error: cardsInBoardOpenedError } = await supabaseServiceClient
+    .from('card_in_board_opened')
+    .insert({ board_id: boardId, card_number: cardToChange.card_number });
+  if (cardsInBoardOpenedError) throw new Error(cardsInBoardOpenedError.message);
 
   return new Response(JSON.stringify({ ok: 123 }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     status: 200,
-  })
-})
+  });
+});
 
 /* To invoke locally:
 

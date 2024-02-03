@@ -1,8 +1,8 @@
-import { Database } from './database.types.ts';
+import { Database } from './database-types.ts';
 
 export type TCardPower = Database['public']['Enums']['Power'];
 
-export type TUseSelectedCardRequest = 
+export type TUseSelectedCardRequest =
   | IUseSelectedProtectCardRequest
   | IUseSelectedRemoveTopCardRequest
   | IUseSelectedRemoveMiddleCardRequest

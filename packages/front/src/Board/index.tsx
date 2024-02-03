@@ -1,16 +1,24 @@
-import { useParams } from '@solidjs/router';
-import { Tower } from './Tower'
-import { For, Match, Switch, createEffect, createResource } from 'solid-js';
-import { fetchCardVariants } from './fetchers/fetchCardVariants';
-import { createMutation, createQuery } from '@tanstack/solid-query';
-import { createGraphQLClient } from '../core/graphql/createGraphQLClient';
-import { boardQueryDocument } from './graphql-documents/boardQueryDocument';
-import { getGraphqlQueryKey } from '../core/graphql/createGetQueryKet';
-import { supabase } from '../supabaseClient';
-import { cardVariantsQueryDocument } from './graphql-documents/cardVariantsQueryDocument';
-import { UserTower } from './UserTower';
-import { Card } from './Card';
+import { FC } from 'react';
 
+import { useParams } from 'react-router-dom';
+
+import { EQueryKey } from '@front/core/query-key';
+import { useMutation, useQuery } from '@tanstack/react-query';
+
+import { getGraphqlQueryKey } from '../core/graphql/createGetQueryKet';
+import { createGraphQLClient } from '../core/graphql/createGraphQLClient';
+import { supabase } from '../supabaseClient';
+
+import { Card } from './Card';
+import { fetchCardVariants } from './fetchers/fetchCardVariants';
+
+
+import { boardQueryDocument } from './graphql-documents/boardQueryDocument';
+
+
+import { cardVariantsQueryDocument } from './graphql-documents/cardVariantsQueryDocument';
+import { Tower } from './Tower';
+import { UserTower } from './UserTower';
 
 // const fetchBoard = async (boardId: number) => {
 //   const [{data: boards, error: boardError }, {data: cardTowers}, {data: cardInBoardDeck}, {data: cardInBoardDiscardDeck}] = await Promise.all([
@@ -44,13 +52,13 @@ import { Card } from './Card';
 
 const graphqlClient = createGraphQLClient();
 
-const createBoardQuery = (boardId: string) => {
-  return createQuery(() => ({
-    queryKey: [getGraphqlQueryKey(boardQueryDocument), boardId],
-    queryFn: () => graphqlClient.request(boardQueryDocument, { boardId }),
-    select: (res) => res.boardCollection,
-  }))
-}
+// const createBoardQuery = (boardId: string) => {
+//   return useQuery(() => ({
+//     queryKey: [getGraphqlQueryKey(boardQueryDocument), boardId],
+//     queryFn: () => graphqlClient.request(boardQueryDocument, { boardId }),
+//     select: (res) => res.boardCollection,
+//   }));
+// };
 
 // const createCarvVariantsQuery = () => {
 //   return createQuery(() => ({
@@ -60,94 +68,105 @@ const createBoardQuery = (boardId: string) => {
 //   }))
 // }
 
-const createCardVariantsQuery = () => {
-  return createQuery(() => ({
-    queryKey: ['card-variants'],
-    queryFn: fetchCardVariants,
-  }))
-}
-
-const createUserQuery = () => {
-  return createQuery(() => ({
-    queryKey: ['user'],
-    queryFn: () => supabase.auth.getUser(),
-    select: (res) => res.data.user,
-  }))
-}
-
-
-
-export const Board = () => {
+export const Board: FC = () => {
   const { id } = useParams();
 
-  const userQuery = createUserQuery();
+  const { data: user } = useQuery({
+    queryKey: [EQueryKey.user],
+    queryFn: () => supabase.auth.getUser(),
+    select: (res) => res.data.user,
+  });
   // const [cardVariants] = createResource(() => fetchCardVariants());
-  const cardVariantsQuery = createCardVariantsQuery();
-  const boardQuery = createBoardQuery(id);
+  const cardVariantsQuery = useQuery({
+    queryKey: ['card-variants'],
+    queryFn: fetchCardVariants,
+  });
+  const boardQuery = useQuery({
+    queryKey: [getGraphqlQueryKey(boardQueryDocument), id],
+    queryFn: () => graphqlClient.request(boardQueryDocument, { boardId: id }),
+    select: (res) => res.boardCollection,
+  });
 
-  const createPullCardMutation = () => {
-    return createMutation(() => ({
-      mutationFn: (boardId: string) => supabase.functions.invoke('pull-card', {body: { boardId }}),
-      onSuccess: () => boardQuery.refetch(),
-    }))
-  }
-  const pullCardMutation = createPullCardMutation();
-  
-  const createSelectOpenedCardMutation = () => {
-    return createMutation(() => ({
-      mutationFn: (payload: {boardId: string, cardNumber: number}) => supabase.functions.invoke('select-opened-card', {body: payload}),
-      onSuccess: () => boardQuery.refetch(),
-    }))
-  }
-  const selectOpenedCard = createSelectOpenedCardMutation();
+  const pullCardMutation = useMutation({
+    mutationFn: (boardId: string) => supabase.functions.invoke('pull-card', { body: { boardId } }),
+    onSuccess: () => boardQuery.refetch(),
+  });
+
+  const selectOpenedCardMutation = useMutation({
+    mutationFn: (payload: { boardId: string; cardNumber: number }) =>
+      supabase.functions.invoke('select-opened-card', { body: payload }),
+    onSuccess: () => boardQuery.refetch(),
+  });
 
   const renderUserTower = () => {
-    const user = userQuery.data;
     if (!user) return null;
     const board = boardQuery.data!.edges[0].node;
-    const tower = boardQuery.data!.edges[0].node.card_towerCollection?.edges.filter(({node}) => node.user_id === user.id)[0].node;
+    const tower = boardQuery.data!.edges[0].node.card_towerCollection?.edges.filter(
+      ({ node }) => node.user_id === user.id
+    )[0].node;
     if (!tower) return null;
     const cardVariants = cardVariantsQuery.data;
     if (!cardVariants) return null;
-    return <UserTower id={tower.id} boardId={board.id} cards={tower.card_in_towerCollection?.edges || []} userId={user.id} cardVariants={cardVariants} openedCardToUse={board.opened_card_number_to_use ?? null} pulledCardToChange={board.pulled_card_number_to_change ?? null} />
-  }
+    return (
+      <UserTower
+        id={tower.id}
+        boardId={board.id}
+        cards={tower.card_in_towerCollection?.edges || []}
+        userId={user.id}
+        cardVariants={cardVariants}
+        openedCardToUse={board.opened_card_number_to_use ?? null}
+        pulledCardToChange={board.pulled_card_number_to_change ?? null}
+      />
+    );
+  };
 
   const renderOtherUsersTowers = () => {
-    const user = userQuery.data;
     if (!user) return null;
     const cardVariants = cardVariantsQuery.data;
     if (!cardVariants) return null;
-    const towersEdges = boardQuery.data!.edges[0].node.card_towerCollection?.edges.filter(({node}) => node.user_id !== user.id);
-    return <For each={towersEdges}>{({node: tower}) => (
-      <Tower id={tower.id} userId={tower.user_id} cards={tower.card_in_towerCollection?.edges || []} cardVariants={cardVariants} />
-    )}</For>;
-  }
+    const towersEdges = boardQuery.data!.edges[0].node.card_towerCollection?.edges.filter(
+      ({ node }) => node.user_id !== user.id
+    );
+    return towersEdges?.map(({ node: tower }) => (
+      <Tower
+        key={tower.id}
+        id={tower.id}
+        userId={tower.user_id}
+        cards={tower.card_in_towerCollection?.edges || []}
+        cardVariants={cardVariants}
+      />
+    ));
+  };
 
   const renderPulledCard = () => {
     const board = boardQuery.data!.edges[0].node;
     if (!board.pulled_card_number_to_change) return null;
     const cardVariants = cardVariantsQuery.data;
     if (!cardVariants) return null;
-    return <Card
-      number={board.pulled_card_number_to_change}
-      power={cardVariants.get(board.pulled_card_number_to_change)!}
-      isActionAvailable={false}
-      isProtected={false}
-    />
-  }
-  
+    return (
+      <Card
+        number={board.pulled_card_number_to_change}
+        power={cardVariants.get(board.pulled_card_number_to_change)!}
+        isActionAvailable={false}
+        isProtected={false}
+      />
+    );
+  };
+
   const renderSelectedOpened = () => {
     const board = boardQuery.data!.edges[0].node;
     if (!board.opened_card_number_to_use) return null;
     const cardVariants = cardVariantsQuery.data;
     if (!cardVariants) return null;
-    return <Card
-      number={board.opened_card_number_to_use}
-      power={cardVariants.get(board.opened_card_number_to_use)!}
-      isActionAvailable={false}
-      isProtected={false}
-    />
-  }
+    return (
+      <Card
+        number={board.opened_card_number_to_use}
+        power={cardVariants.get(board.opened_card_number_to_use)!}
+        isActionAvailable={false}
+        isProtected={false}
+      />
+    );
+  };
 
   const renderOpenedCards = () => {
     const board = boardQuery.data!.edges[0].node;
@@ -156,42 +175,51 @@ export const Board = () => {
     const cardVariants = cardVariantsQuery.data;
     if (!cardVariants) return null;
 
-    return <For each={openedCards}>{({node: openedCard}) => (
+    return openedCards?.map(({ node: openedCard }) => (
       <Card
+        key={openedCard.id}
         number={openedCard.card_number}
         power={cardVariants.get(openedCard.card_number)!}
         isActionAvailable={!board.pulled_card_number_to_change}
         isProtected={false}
         onClick={() => {
           if (board.opened_card_number_to_use) return true;
-          selectOpenedCard.mutate({boardId: board.id, cardNumber: openedCard.card_number});
+          selectOpenedCardMutation.mutate({ boardId: board.id, cardNumber: openedCard.card_number });
         }}
       />
-    )}</For>;
-  }
+    ));
+  };
 
-  return <div style={{height: '100%', padding: '16px'}}>
-    <Switch>
-      <Match when={boardQuery.isPending || userQuery.isPending || cardVariantsQuery.isPending}>Loading...</Match>
-      <Match when={boardQuery.isError || userQuery.error || cardVariantsQuery.error}>Error</Match>
-      <Match when={boardQuery.isSuccess && boardQuery.isSuccess && cardVariantsQuery.isSuccess}>
-        <div>
-          <div>Deck</div>
-          {!!boardQuery.data?.edges[0].node.card_in_board_deckCollection?.edges.length && <button onClick={() => pullCardMutation.mutate(id)}>pull card</button>}
-          <div>Pulled card</div>
-          {renderPulledCard()}
-          <div>Opened cards</div>
-          {renderOpenedCards()}
-          <div>Selected opened card</div>
-          {renderSelectedOpened()}
-        </div>
-        <div>Towers</div>
-        {/* Decks horizontal list */}
-        <div style={{display: 'flex', "flex-direction": "row", "justify-content": "space-between", "padding-left": "8px", "padding-right": "8px"}}>
-          {renderUserTower()}
-          {renderOtherUsersTowers()}
-        </div>
-      </Match>
-    </Switch>
-  </div>
-}
+  if (!boardQuery.data || !user || !cardVariantsQuery.data) return null;
+
+  return (
+    <div style={{ height: '100%', padding: '16px' }}>
+      <div>
+        <div>Deck</div>
+        {!!boardQuery.data?.edges[0].node.card_in_board_deckCollection?.edges.length && (
+          <button onClick={() => pullCardMutation.mutate(id)}>pull card</button>
+        )}
+        <div>Pulled card</div>
+        {renderPulledCard()}
+        <div>Opened cards</div>
+        {renderOpenedCards()}
+        <div>Selected opened card</div>
+        {renderSelectedOpened()}
+      </div>
+      <div>Towers</div>
+      {/* Decks horizontal list */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingLeft: '8px',
+          paddingRight: '8px',
+        }}
+      >
+        {renderUserTower()}
+        {renderOtherUsersTowers()}
+      </div>
+    </div>
+  );
+};

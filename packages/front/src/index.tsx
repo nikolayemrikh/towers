@@ -1,10 +1,7 @@
-/* @refresh reload */
-import { render } from 'solid-js/web'
-
+import { createRoot } from 'react-dom/client';
 import 'normalize.css';
-import './index.css'
-import App from './App'
+import './index.css';
 
-const root = document.getElementById('root')
+import { App } from './App';
 
-render(() => <App />, root!)
+createRoot(document.getElementById('root')!).render(<App />);
