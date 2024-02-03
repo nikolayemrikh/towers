@@ -2,9 +2,7 @@ import { graphql } from '../../__generated__/graphql';
 
 export const boardQueryDocument = graphql(/* GraphQL */ `
   query boardCollection($boardId: BigInt!) {
-    boardCollection(filter: {
-      id: { eq: $boardId }
-    }) {
+    boardCollection(filter: { id: { eq: $boardId } }) {
       edges {
         node {
           id

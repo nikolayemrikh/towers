@@ -1,6 +1,6 @@
 import { FC } from 'react';
 
-import { useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 
 import { EQueryKey } from '@front/core/query-key';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -57,10 +57,15 @@ export const Board: FC = () => {
   });
 
   if (!boardQuery.data || !user || !cardVariants) return null;
+  const board = boardQuery.data.edges[0]?.node;
 
-  const board = boardQuery.data.edges[0].node;
+  if (!board) return <Navigate to="/lobby" />;
+
   const openedCards = board.card_in_board_openedCollection?.edges;
   const userTower = board.card_towerCollection?.edges.filter(({ node }) => node.user_id === user.id)[0].node;
+
+  if (!userTower) throw new Error('User tower must be defined');
+
   const otherTowers = board.card_towerCollection?.edges.filter(({ node }) => node.user_id !== user.id);
 
   return (
@@ -114,17 +119,15 @@ export const Board: FC = () => {
           paddingRight: '8px',
         }}
       >
-        {userTower && (
-          <UserTower
-            id={userTower.id}
-            boardId={board.id}
-            cards={userTower.card_in_towerCollection?.edges || []}
-            userId={user.id}
-            cardVariants={cardVariants}
-            openedCardToUse={board.opened_card_number_to_use ?? null}
-            pulledCardToChange={board.pulled_card_number_to_change ?? null}
-          />
-        )}
+        <UserTower
+          id={userTower.id}
+          boardId={board.id}
+          cards={userTower.card_in_towerCollection?.edges || []}
+          userId={user.id}
+          cardVariants={cardVariants}
+          openedCardToUse={board.opened_card_number_to_use ?? null}
+          pulledCardToChange={board.pulled_card_number_to_change ?? null}
+        />
         {otherTowers?.map(({ node: tower }) => (
           <Tower
             key={tower.id}
