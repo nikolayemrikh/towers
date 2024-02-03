@@ -11,11 +11,7 @@ import { supabase } from '../supabaseClient';
 
 import { Card } from './Card';
 import { fetchCardVariants } from './fetchers/fetchCardVariants';
-
-
 import { boardQueryDocument } from './graphql-documents/boardQueryDocument';
-
-
 import { cardVariantsQueryDocument } from './graphql-documents/cardVariantsQueryDocument';
 import { Tower } from './Tower';
 import { UserTower } from './UserTower';
