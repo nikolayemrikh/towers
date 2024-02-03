@@ -1,8 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 import { corsHeaders } from '../_shared/cors.ts';
+import { createDeckFromDiscaredCards } from '../_shared/createDeckFromDiscaredCards.ts';
 import { Database } from '../_shared/database-types.ts';
 import { TUseSelectedCardRequest } from '../_shared/use-selected-card-types.ts';
+
 // import { TUseSelectedCardRequest } from '../../../shared/src/_supabase/use-selected-card.types.ts';
 // Follow this setup guide to integrate the Deno language server with your editor:
 // https://deno.land/manual/getting_started/setup_your_environment
@@ -18,7 +20,7 @@ Deno.serve(async (req: Request) => {
   const authHeader = req.headers.get('Authorization')!;
   const res = (await req.json()) as TUseSelectedCardRequest;
 
-  const { boardId } = res;
+  const boardId = Number(res.boardId);
 
   const supabaseClient = createClient<Database>(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
     global: { headers: { Authorization: authHeader } },
@@ -28,6 +30,17 @@ Deno.serve(async (req: Request) => {
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
+
+  const getCardsFromBoardDeck = async (params: { boardId: number }) => {
+    const { boardId } = params;
+    const { data, error } = await supabaseServiceClient
+      .from('card_in_board_deck')
+      .select('*')
+      .eq('board_id', boardId)
+      .order('id', { ascending: true });
+    if (error) throw new Error(error.message);
+    return data;
+  };
 
   const { data } = await supabaseClient.auth.getUser();
   const user = data.user;
@@ -209,55 +222,14 @@ Deno.serve(async (req: Request) => {
     }
     case 'Remove_top': {
       for (const cardTower of cardTowers) {
-        const { data: cardsInBoardDeck, error: cardsInBoardDeckError } = await supabaseServiceClient
-          .from('card_in_board_deck')
-          .select('*')
-          .eq('board_id', boardId)
-          .order('id', { ascending: true });
-        if (cardsInBoardDeckError) throw new Error(cardsInBoardDeckError.message);
-        let cardInBoardDeck = cardsInBoardDeck[cardsInBoardDeck.length - 1] as (typeof cardsInBoardDeck)[0] | undefined;
-        if (!cardInBoardDeck) {
-          const { data: cardsInBoardDiscard, error: cardsInBoardDiscardError } = await supabaseServiceClient
-            .from('card_in_board_discard_deck')
-            .select('*')
-            .eq('board_id', boardId)
-            .order('id', { ascending: true });
-          if (cardsInBoardDiscardError) throw new Error(cardsInBoardDiscardError.message);
-
-          // shuffle cards in discard pile
-          const cardsInBoardDiscardToReduce = [...cardsInBoardDiscard];
-          const cardsToBoardDeck: Database['public']['Tables']['card_variant']['Row'][] = [];
-          while (cardsInBoardDiscardToReduce.length > 0) {
-            const randomIndex = Math.floor(Math.random() * cardsInBoardDiscardToReduce.length);
-            const randomCardInBoardDiscard = cardsInBoardDiscardToReduce[randomIndex];
-            const cardVariant = cardVariants.find(
-              (cardVariant) => cardVariant.number === randomCardInBoardDiscard.card_number
-            );
-            if (!cardVariant)
-              throw new Error(`Card variant not found for card with number "${randomCardInBoardDiscard.card_number}"`);
-            cardsToBoardDeck.push({ number: randomCardInBoardDiscard.card_number, power: cardVariant.power });
-            cardsInBoardDiscardToReduce.splice(randomIndex, 1);
-          }
-
-          // create cards in border deck
-          for (const cardToBoardDeck of cardsToBoardDeck) {
-            const { data: cardInBoardDeckData, error: cardInBoardDeckInsertError } = await supabaseServiceClient
-              .from('card_in_board_deck')
-              .insert({ board_id: boardId, card_number: cardToBoardDeck.number })
-              .select();
-            if (cardInBoardDeckInsertError) throw new Error(cardInBoardDeckInsertError.message);
-            cardInBoardDeck = cardInBoardDeckData[0];
-          }
-
-          // remove cards in board discard
-          for (const cardInBoardDiscard of cardsInBoardDiscard) {
-            const { error: cardInBoardDiscardDeleteError } = await supabaseServiceClient
-              .from('card_in_board_discard_deck')
-              .delete()
-              .eq('id', cardInBoardDiscard.id);
-            if (cardInBoardDiscardDeleteError) throw new Error(cardInBoardDiscardDeleteError.message);
-          }
+        let cardsInBoardDeck = await getCardsFromBoardDeck({ boardId });
+        if (!cardsInBoardDeck.length) {
+          await createDeckFromDiscaredCards({ boardId, cardVariants });
+          cardsInBoardDeck = await getCardsFromBoardDeck({ boardId });
         }
+        const cardInBoardDeck = cardsInBoardDeck[cardsInBoardDeck.length - 1] as
+          | (typeof cardsInBoardDeck)[0]
+          | undefined;
 
         if (!cardInBoardDeck) throw new Error('Deck should not be empty');
 
