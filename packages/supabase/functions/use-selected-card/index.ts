@@ -61,10 +61,9 @@ Deno.serve(async (req: Request) => {
   const { data: cardTowers, error: cardTowersError } = await supabaseServiceClient
     .from('card_tower')
     .select('*')
-    .eq('user_id', user.id)
     .eq('board_id', boardId);
   if (cardTowersError) throw new Error(cardTowersError.message);
-  const cardTower = cardTowers[0];
+  const cardTower = cardTowers.find((cardTower) => cardTower.user_id === user.id);
   if (!cardTower) throw new Error('Card tower for current user not found');
 
   const { data: cardsInTower, error: cardsInTowerError } = await supabaseServiceClient
@@ -73,6 +72,12 @@ Deno.serve(async (req: Request) => {
     .eq('card_tower_id', cardTower.id)
     .order('id', { ascending: true });
   if (cardsInTowerError) throw new Error(cardsInTowerError.message);
+
+  // move used opened card to discard pile
+  const { error: cardInBoardDiscardDeckError } = await supabaseServiceClient
+    .from('card_in_board_discard_deck')
+    .insert({ board_id: boardId, card_number: openedCardNumberToUse });
+  if (cardInBoardDiscardDeckError) throw new Error(cardInBoardDiscardDeckError.message);
 
   switch (resPower) {
     case 'Protect': {
@@ -203,18 +208,81 @@ Deno.serve(async (req: Request) => {
       break;
     }
     case 'Remove_top': {
-      const card = cardsInTower[cardsInTower.length - 1];
-      const results = await Promise.all(
-        cardTowers.map((tower) =>
-          supabaseServiceClient
-            .from('card_in_tower')
-            .update({ card_number: card.card_number })
-            .eq('card_tower_id', tower.id)
-            .eq('id', card.id)
-        )
-      );
-      // @TODO remove one by one and check after each update if there are no more cards in tower
-      // then move cards into the deck
+      for (const cardTower of cardTowers) {
+        const { data: cardsInBoardDeck, error: cardsInBoardDeckError } = await supabaseServiceClient
+          .from('card_in_board_deck')
+          .select('*')
+          .eq('board_id', boardId)
+          .order('id', { ascending: true });
+        if (cardsInBoardDeckError) throw new Error(cardsInBoardDeckError.message);
+        let cardInBoardDeck = cardsInBoardDeck[cardsInBoardDeck.length - 1] as (typeof cardsInBoardDeck)[0] | undefined;
+        if (!cardInBoardDeck) {
+          const { data: cardsInBoardDiscard, error: cardsInBoardDiscardError } = await supabaseServiceClient
+            .from('card_in_board_discard_deck')
+            .select('*')
+            .eq('board_id', boardId)
+            .order('id', { ascending: true });
+          if (cardsInBoardDiscardError) throw new Error(cardsInBoardDiscardError.message);
+
+          // shuffle cards in discard pile
+          const cardsInBoardDiscardToReduce = [...cardsInBoardDiscard];
+          const cardsToBoardDeck: Database['public']['Tables']['card_variant']['Row'][] = [];
+          while (cardsInBoardDiscardToReduce.length > 0) {
+            const randomIndex = Math.floor(Math.random() * cardsInBoardDiscardToReduce.length);
+            const randomCardInBoardDiscard = cardsInBoardDiscardToReduce[randomIndex];
+            const cardVariant = cardVariants.find(
+              (cardVariant) => cardVariant.number === randomCardInBoardDiscard.card_number
+            );
+            if (!cardVariant)
+              throw new Error(`Card variant not found for card with number "${randomCardInBoardDiscard.card_number}"`);
+            cardsToBoardDeck.push({ number: randomCardInBoardDiscard.card_number, power: cardVariant.power });
+            cardsInBoardDiscardToReduce.splice(randomIndex, 1);
+          }
+
+          // create cards in border deck
+          for (const cardToBoardDeck of cardsToBoardDeck) {
+            const { data: cardInBoardDeckData, error: cardInBoardDeckInsertError } = await supabaseServiceClient
+              .from('card_in_board_deck')
+              .insert({ board_id: boardId, card_number: cardToBoardDeck.number })
+              .select();
+            if (cardInBoardDeckInsertError) throw new Error(cardInBoardDeckInsertError.message);
+            cardInBoardDeck = cardInBoardDeckData[0];
+          }
+
+          // remove cards in board discard
+          for (const cardInBoardDiscard of cardsInBoardDiscard) {
+            const { error: cardInBoardDiscardDeleteError } = await supabaseServiceClient
+              .from('card_in_board_discard_deck')
+              .delete()
+              .eq('id', cardInBoardDiscard.id);
+            if (cardInBoardDiscardDeleteError) throw new Error(cardInBoardDiscardDeleteError.message);
+          }
+        }
+
+        if (!cardInBoardDeck) throw new Error('Deck should not be empty');
+
+        const { data: cardsInTower, error: cardsInTowerError } = await supabaseServiceClient
+          .from('card_in_tower')
+          .select('*')
+          .eq('card_tower_id', cardTower.id)
+          .order('id', { ascending: true });
+        if (cardsInTowerError) throw new Error(cardsInTowerError.message);
+
+        const cardInTowerToUpdate = cardsInTower[cardsInTower.length - 1];
+
+        // update card in card tower
+        const { error: cardInTowerUpdateError } = await supabaseServiceClient
+          .from('card_in_tower')
+          .update({ card_number: cardInBoardDeck.card_number })
+          .eq('id', cardInTowerToUpdate.id);
+        if (cardInTowerUpdateError) throw new Error(cardInTowerUpdateError.message);
+
+        // move card from card tower to opened pile
+        const { error: cardInBoardOpenedError } = await supabaseServiceClient
+          .from('card_in_board_opened')
+          .insert({ board_id: boardId, card_number: cardInTowerToUpdate.card_number });
+        if (cardInBoardOpenedError) throw new Error(cardInBoardOpenedError.message);
+      }
       break;
     }
     case 'Remove_middle':

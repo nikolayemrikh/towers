@@ -126,11 +126,11 @@ export const UserTower: FC<{
           case 'Protect':
             return !isProtected;
           case 'Remove_top':
-            return index === 0;
+            return index === cards.length - 1;
           case 'Remove_middle':
-            return index === 3;
+            return index === (cards.length - 1) / 2;
           case 'Remove_bottom':
-            return index === 6;
+            return index === 0;
           case 'Swap_neighbours':
             return !isProtected && (!cards[index + 1]?.node.is_protected || !cards[index - 1]?.node.is_protected);
           case 'Swap_through_one':

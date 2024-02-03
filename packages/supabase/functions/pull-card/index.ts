@@ -32,12 +32,13 @@ Deno.serve(async (req: Request) => {
   const { data: cardsInBoardDeck, error: cardsInBoardDeckError } = await supabaseServiceClient
     .from('card_in_board_deck')
     .select('*')
-    .eq('board_id', boardId);
+    .eq('board_id', boardId)
+    .order('id', { ascending: true });
   if (cardsInBoardDeckError) throw new Error(cardsInBoardDeckError.message);
 
   if (cardsInBoardDeck.length === 0) throw new Error('Deck should not be empty');
 
-  const cardFromBoardDeck = cardsInBoardDeck[0];
+  const cardFromBoardDeck = cardsInBoardDeck[cardsInBoardDeck.length - 1];
 
   const { error: cardInBoardDeckError } = await supabaseServiceClient
     .from('card_in_board_deck')
