@@ -71,8 +71,8 @@ export const Board: FC = () => {
   return (
     <div style={{ height: '100%', padding: '16px' }}>
       <div>
-        <div>Deck</div>
-        {!!boardQuery.data?.edges[0].node.card_in_board_deckCollection?.edges.length && (
+        <div>Deck ({board.card_in_board_deckCollection?.edges.length})</div>
+        {!!board.card_in_board_deckCollection?.edges.length && (
           <button onClick={() => pullCardMutation.mutate(id)}>pull card</button>
         )}
         <div>Pulled card</div>
@@ -107,6 +107,7 @@ export const Board: FC = () => {
             isProtected={false}
           />
         )}
+        <div>Discard pile ({board.card_in_board_discard_deckCollection?.edges.length})</div>
       </div>
       <div>Towers</div>
       {/* Decks horizontal list */}

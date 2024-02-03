@@ -42,6 +42,14 @@ export const boardQueryDocument = graphql(/* GraphQL */ `
               }
             }
           }
+          card_in_board_discard_deckCollection {
+            edges {
+              node {
+                id
+                card_number
+              }
+            }
+          }
         }
       }
     }
