@@ -22,11 +22,14 @@ export const Lobby: FC = () => {
 
   const { data: userBoards, refetch: refetchUserBoards } = useQuery({
     queryKey: [EQueryKey.userBoards],
-    queryFn: async () =>
-      await supabase
+    enabled: !!user,
+    queryFn: async () => {
+      if (!user) throw new Error('User can not be null');
+      return await supabase
         .from('card_tower')
         .select('id, created_at, board!inner(id,turn_user_id,created_at)')
-        .eq('user_id', user!.id),
+        .eq('user_id', user.id);
+    },
     select: (res) =>
       res.data
         ?.map((tower) => {
