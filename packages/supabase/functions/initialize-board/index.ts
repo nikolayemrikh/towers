@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
 
     // move cards from board deck to card tower
     // move first 7 cards from board deck to card tower
-    const cardsToMoveFromBoardDeck = cardsInBoardDeck.splice(0, 7).sort((a, b) => b.number - a.number);
+    const cardsToMoveFromBoardDeck = cardsInBoardDeck.splice(0, 7).sort((a, b) => a.number - b.number);
     for (const cardToMoveFromBoardDeck of cardsToMoveFromBoardDeck) {
       const { error: cardInCardTowerInsertError } = await supabaseServiceClient
         .from('card_in_tower')
