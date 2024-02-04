@@ -2,11 +2,16 @@ import { FC } from 'react';
 
 import { Link } from 'react-router-dom';
 
+import { createGraphQLClient } from '@front/core/graphql/createGraphQLClient';
 import { EQueryKey } from '@front/core/query-key';
 import { User } from '@supabase/supabase-js';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { supabase } from '../supabaseClient';
+
+import { cardTowersQueryDocument } from './graphql-documents/cardTowersQueryDocument';
+
+const graphqlClient = createGraphQLClient();
 
 export const Lobby: FC = () => {
   const { data: user } = useQuery({
@@ -24,21 +29,15 @@ export const Lobby: FC = () => {
   const { data: userBoards, refetch: refetchUserBoards } = useQuery({
     queryKey: [EQueryKey.userBoards],
     enabled: !!user,
-    queryFn: async () => {
-      if (!user) throw new Error('User can not be null');
-      return await supabase
-        .from('card_tower')
-        .select('id, created_at, board!inner(id,turn_user_id,created_at)')
-        .eq('user_id', user.id);
+    queryFn: async ({ signal }) => {
+      if (!user) throw new Error('User must be defined');
+      return graphqlClient.request({
+        document: cardTowersQueryDocument,
+        signal,
+        variables: { userId: user.id },
+      });
     },
-    select: (res) =>
-      res.data
-        ?.map((tower) => {
-          const board = tower.board;
-          if (!board) throw new Error('Board can not be null');
-          return board;
-        })
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+    select: (res) => res.card_towerCollection?.edges,
   });
 
   const initializeMutation = useMutation({
@@ -86,7 +85,7 @@ export const Lobby: FC = () => {
       <div>
         <h2>Your boards</h2>
         <div>
-          {userBoards?.map((board) => (
+          {userBoards?.map(({ node: board }) => (
             <div key={board.id}>
               <Link to={`/board/${board.id}`}>
                 #{board.id} from {new Date(board.created_at).toLocaleString('ru-ru')}
