@@ -84,6 +84,7 @@ export const Board: FC = () => {
         <div>Deck ({board.card_in_board_deckCollection?.edges.length})</div>
         <button
           disabled={
+            pullCardMutation.isPending ||
             !board.card_in_board_deckCollection?.edges.length ||
             !!board.pulled_card_number_to_change ||
             !!board.opened_card_number_to_use
@@ -110,7 +111,8 @@ export const Board: FC = () => {
             isActionAvailable={checkIsOpenedCardAvailableForAction(cardVariants.get(openedCard.card_number)!)}
             isProtected={false}
             onClick={() => {
-              if (board.opened_card_number_to_use) return true;
+              if (board.opened_card_number_to_use) return;
+              if (selectOpenedCardMutation.isPending) return;
               selectOpenedCardMutation.mutate({ boardId: board.id, cardNumber: openedCard.card_number });
             }}
           />

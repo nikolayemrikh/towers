@@ -45,6 +45,7 @@ export const UserTower: FC<{
   });
 
   const handleCardClick = async (index: number, isActionAvailable: boolean): Promise<void> => {
+    if (useSelectedCardMutation.isPending) return;
     if (!isActionAvailable) return;
     if (pulledCardToChange) {
       changeCardToPulledMutation.mutate(index);
