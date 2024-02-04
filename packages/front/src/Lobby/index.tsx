@@ -3,7 +3,8 @@ import { FC } from 'react';
 import { Link } from 'react-router-dom';
 
 import { EQueryKey } from '@front/core/query-key';
-import { useQuery } from '@tanstack/react-query';
+import { User } from '@supabase/supabase-js';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { supabase } from '../supabaseClient';
 
@@ -40,6 +41,21 @@ export const Lobby: FC = () => {
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
   });
 
+  const initializeMutation = useMutation({
+    mutationFn: () => supabase.functions.invoke('initialize-board'),
+    onSuccess: () => refetchUserBoards(),
+  });
+
+  const enterLobbyMutation = useMutation({
+    mutationFn: async (user: User) => supabase.from('user_in_lobby').insert({ user_id: user.id }),
+    onSuccess: () => refetchUsersInLobby(),
+  });
+
+  const leaveLobbyMutation = useMutation({
+    mutationFn: async (user: User) => supabase.from('user_in_lobby').delete().eq('user_id', user.id),
+    onSuccess: () => refetchUsersInLobby(),
+  });
+
   const isInLobby = !!user?.id && !!usersInLobby?.find((it) => it.user_id === user.id);
 
   if (!user) return null;
@@ -51,33 +67,18 @@ export const Lobby: FC = () => {
       <div>Me in lobby: {isInLobby ? 'Yes' : 'No'}</div>
       <div>
         {isInLobby ? (
-          <button
-            onClick={async () => {
-              await supabase.from('user_in_lobby').delete().eq('user_id', user.id);
-              refetchUsersInLobby();
-            }}
-          >
+          <button disabled={leaveLobbyMutation.isPending} onClick={() => leaveLobbyMutation.mutate(user)}>
             Don&apos;t want to play
           </button>
         ) : (
-          <button
-            onClick={async () => {
-              await supabase.from('user_in_lobby').insert({ user_id: user.id });
-              refetchUsersInLobby();
-            }}
-          >
+          <button disabled={enterLobbyMutation.isPending} onClick={() => enterLobbyMutation.mutate(user)}>
             Want to play
           </button>
         )}
       </div>
       <div>
         {isInLobby && usersInLobby?.length === 1 && (
-          <button
-            onClick={async () => {
-              await supabase.functions.invoke('initialize-board');
-              await refetchUserBoards();
-            }}
-          >
+          <button disabled={initializeMutation.isPending} onClick={() => initializeMutation.mutate()}>
             Start game
           </button>
         )}
