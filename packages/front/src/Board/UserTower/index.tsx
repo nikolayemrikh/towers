@@ -50,10 +50,10 @@ export const UserTower: FC<{
       return;
     }
     if (!openedCardToUse) throw new Error('Can not make an action when there is no opened card to use');
-    const openedCardPower = cardVariants.get(openedCardToUse)!;
+    const selectedOpenedCardPower = cardVariants.get(openedCardToUse)!;
     const selectedCardIndex = selectedCardIndexAccessor;
     if (selectedCardIndex === null) {
-      switch (openedCardPower) {
+      switch (selectedOpenedCardPower) {
         case 'Protect':
           return setSelectedCardIndex(index);
         case 'Swap_neighbours':
@@ -75,13 +75,13 @@ export const UserTower: FC<{
             cardIndex: index,
           });
         default: {
-          const unhandledPower: never = openedCardPower;
+          const unhandledPower: never = selectedOpenedCardPower;
           throw new Error(`Unhandled power "${unhandledPower}"`);
         }
       }
     } else {
       try {
-        switch (openedCardPower) {
+        switch (selectedOpenedCardPower) {
           case 'Protect':
             return useSelectedCardMutation.mutate({
               boardId: boardId,
@@ -104,7 +104,7 @@ export const UserTower: FC<{
               secondCardIndex: index,
             });
           default:
-            throw new Error(`Only one card selection required to make action with power "${openedCardPower}"`);
+            throw new Error(`Only one card selection required to make action with power "${selectedOpenedCardPower}"`);
         }
       } finally {
         setSelectedCardIndex(null);
@@ -120,12 +120,12 @@ export const UserTower: FC<{
   ): boolean => {
     if (pulledCardToChange) return true;
     if (openedCardToUse) {
-      const openedCardPower = cardVariants.get(openedCardToUse)!;
+      const selectedOpenedCardPower = cardVariants.get(openedCardToUse)!;
       const selectedCardIndex = selectedCardIndexAccessor;
       if (selectedCardIndex === null) {
-        switch (openedCardPower) {
+        switch (selectedOpenedCardPower) {
           case 'Protect':
-            return !isProtected;
+            return !isProtected && (!cards[index + 1]?.node.is_protected || !cards[index - 1]?.node.is_protected);
           case 'Remove_top':
             return index === cards.length - 1;
           case 'Remove_middle':
@@ -149,20 +149,20 @@ export const UserTower: FC<{
               (!cards[index - 1]?.node.is_protected || !cards[index - 2]?.node.is_protected)
             );
           default: {
-            const unhandledPower: never = openedCardPower;
+            const unhandledPower: never = selectedOpenedCardPower;
             throw new Error(`Unhandled power "${unhandledPower}"`);
           }
         }
       } else {
-        switch (openedCardPower) {
+        switch (selectedOpenedCardPower) {
           case 'Protect':
-            return Math.abs(selectedCardIndex - index) === 1;
+            return !isProtected && Math.abs(selectedCardIndex - index) === 1;
           case 'Swap_neighbours':
             return !isProtected && Math.abs(selectedCardIndex - index) === 1;
           case 'Swap_through_one':
             return !isProtected && Math.abs(selectedCardIndex - index) === 2;
           default:
-            throw new Error(`Action for opened card power "${openedCardPower}" can't have second step`);
+            throw new Error(`Action for opened card power "${selectedOpenedCardPower}" can't have second step`);
         }
       }
     }
