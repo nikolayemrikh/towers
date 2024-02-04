@@ -72,9 +72,16 @@ export const Board: FC = () => {
     <div style={{ height: '100%', padding: '16px' }}>
       <div>
         <div>Deck ({board.card_in_board_deckCollection?.edges.length})</div>
-        {!!board.card_in_board_deckCollection?.edges.length && (
-          <button onClick={() => pullCardMutation.mutate(id)}>pull card</button>
-        )}
+        <button
+          disabled={
+            !board.card_in_board_deckCollection?.edges.length ||
+            !!board.pulled_card_number_to_change ||
+            !!board.opened_card_number_to_use
+          }
+          onClick={() => pullCardMutation.mutate(id)}
+        >
+          pull card
+        </button>
         <div>Pulled card</div>
         {board.pulled_card_number_to_change && (
           <Card

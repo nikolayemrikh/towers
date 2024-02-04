@@ -14,7 +14,8 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders });
   }
   const authHeader = req.headers.get('Authorization')!;
-  const { boardId } = (await req.json()) as { boardId: string };
+  const res = (await req.json()) as { boardId: string };
+  const boardId = Number(res.boardId);
 
   const supabaseClient = createClient<Database>(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
     global: { headers: { Authorization: authHeader } },
@@ -28,6 +29,17 @@ Deno.serve(async (req: Request) => {
   const { data } = await supabaseClient.auth.getUser();
   const user = data.user;
   if (!user) throw new Error('User not found');
+
+  const { data: boards, error: boardsError } = await supabaseServiceClient.from('board').select('*').eq('id', boardId);
+  if (boardsError) throw new Error(boardsError.message);
+  const board = boards[0];
+  if (!board) throw new Error('Board not found');
+
+  if (board.turn_user_id !== user.id) throw new Error('Turn user is not current user');
+
+  if (board.opened_card_number_to_use)
+    throw new Error('Can not pull card when opened card number has already been set');
+  if (board.pulled_card_number_to_change) throw new Error('Can not pull card when card has already been pulled');
 
   const { data: cardsInBoardDeck, error: cardsInBoardDeckError } = await supabaseServiceClient
     .from('card_in_board_deck')
@@ -49,8 +61,7 @@ Deno.serve(async (req: Request) => {
   const { error: boardUpdateError } = await supabaseServiceClient
     .from('board')
     .update({ pulled_card_number_to_change: cardFromBoardDeck.card_number })
-    .eq('id', boardId)
-    .eq('turn_user_id', user.id);
+    .eq('id', boardId);
 
   if (boardUpdateError) throw new Error(boardUpdateError.message);
 

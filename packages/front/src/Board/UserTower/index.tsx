@@ -43,7 +43,8 @@ export const UserTower: FC<{
       queryClient.refetchQueries({ queryKey: [getGraphqlQueryKey(boardQueryDocument), id], exact: true }),
   });
 
-  const handleCardClick = async (index: number) => {
+  const handleCardClick = async (index: number, isActionAvailable: boolean): Promise<void> => {
+    if (!isActionAvailable) return;
     if (pulledCardToChange) {
       changeCardToPulledMutation.mutate(index);
       return;
@@ -172,15 +173,20 @@ export const UserTower: FC<{
     <div style={{ display: 'flex', 'flexDirection': 'column-reverse', gap: '8px' }}>
       {cards.map((card, index) => {
         const power = cardVariants.get(card.node.card_number)!;
-
+        const isActionAvailable = checkIsAvailableForAction(
+          card.node.card_number,
+          power,
+          index,
+          card.node.is_protected
+        );
         return (
           <Card
             key={card.node.id}
             number={card.node.card_number}
             power={power}
-            isActionAvailable={checkIsAvailableForAction(card.node.card_number, power, index, card.node.is_protected)}
+            isActionAvailable={isActionAvailable}
             isProtected={card.node.is_protected}
-            onClick={() => handleCardClick(index)}
+            onClick={() => handleCardClick(index, isActionAvailable)}
           />
         );
       })}

@@ -1,3 +1,5 @@
+import { FC } from 'react';
+
 import { TCardPower } from '@front/Board/fetchers/fetchCardVariants/types';
 
 const PowerTitle: Record<TCardPower, string> = {
@@ -11,25 +13,27 @@ const PowerTitle: Record<TCardPower, string> = {
   Swap_through_one: 'Swap through one',
 };
 
-export const Card = (props: {
+export const Card: FC<{
   number: number;
   power: TCardPower;
   isActionAvailable: boolean;
   isProtected: boolean;
   onClick?: () => void;
-}) => {
+}> = (props) => {
+  const { number, power, isActionAvailable, isProtected, onClick } = props;
   return (
     <div
-      onClick={() => props.onClick?.()}
+      onClick={() => onClick?.()}
       style={{
         display: 'flex',
         'flexDirection': 'column',
         padding: '10px',
-        'backgroundColor': props.isActionAvailable ? 'purple' : 'black',
+        border: isProtected ? '1px solid red' : 'none',
+        'backgroundColor': isActionAvailable ? 'purple' : 'black',
       }}
     >
-      <div>card {props.number}</div>
-      <div>({PowerTitle[props.power]})</div>
+      <div>card {number}</div>
+      <div>({PowerTitle[power]})</div>
     </div>
   );
 };
