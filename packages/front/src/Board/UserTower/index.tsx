@@ -7,8 +7,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getGraphqlQueryKey } from '../../core/graphql/createGetQueryKet';
 import { supabase } from '../../supabaseClient';
 import { Card } from '../Card';
-import { TCardPower, TCardVariants } from '../fetchers/fetchCardVariants/types';
+import { TCardVariants } from '../fetchers/fetchCardVariants/types';
 import { boardQueryDocument } from '../graphql-documents/boardQueryDocument';
+import { checkIsUserCardAvailableForInitialAction } from '../helpers/checkIsUserCardAvailableForInitialAction';
 
 type TN<T> = NonNullable<T>;
 type TCards = TN<
@@ -16,46 +17,6 @@ type TCards = TN<
     TN<TN<TN<BoardCollectionQuery['boardCollection']>['edges']>[0]['node']['card_towerCollection']>['edges']
   >[0]['node']['card_in_towerCollection']
 >['edges'];
-
-export const checkIsAvailableForInitialAction = (
-  index: number,
-  isProtected: boolean,
-  selectedOpenedCardPower: TCardPower,
-  cards: TCards
-): boolean => {
-  switch (selectedOpenedCardPower) {
-    case 'Protect':
-      return (
-        !isProtected && (cards[index + 1]?.node.is_protected === false || cards[index - 1]?.node.is_protected === false)
-      );
-    case 'Remove_top':
-      return index === cards.length - 1;
-    case 'Remove_middle':
-      return index === (cards.length - 1) / 2;
-    case 'Remove_bottom':
-      return index === 0;
-    case 'Swap_neighbours':
-      return (
-        !isProtected && (cards[index + 1]?.node.is_protected === false || cards[index - 1]?.node.is_protected === false)
-      );
-    case 'Swap_through_one':
-      return (
-        !isProtected && (cards[index + 2]?.node.is_protected === false || cards[index - 2]?.node.is_protected === false)
-      );
-    case 'Move_up_by_two':
-      return (
-        !isProtected && (cards[index + 1]?.node.is_protected === false || cards[index + 2]?.node.is_protected === false)
-      );
-    case 'Move_down_by_two':
-      return (
-        !isProtected && (cards[index - 1]?.node.is_protected === false || cards[index - 2]?.node.is_protected === false)
-      );
-    default: {
-      const unhandledPower: never = selectedOpenedCardPower;
-      throw new Error(`Unhandled power "${unhandledPower}"`);
-    }
-  }
-};
 
 export const UserTower: FC<{
   id: string;
@@ -158,7 +119,7 @@ export const UserTower: FC<{
       const selectedOpenedCardPower = cardVariants.get(openedCardToUse)!;
       const selectedCardIndex = selectedCardIndexAccessor;
       if (selectedCardIndex === null) {
-        return checkIsAvailableForInitialAction(index, isProtected, selectedOpenedCardPower, cards);
+        return checkIsUserCardAvailableForInitialAction(index, isProtected, selectedOpenedCardPower, cards);
       } else {
         switch (selectedOpenedCardPower) {
           case 'Protect':

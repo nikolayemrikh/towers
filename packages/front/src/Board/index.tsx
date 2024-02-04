@@ -13,8 +13,9 @@ import { Card } from './Card';
 import { fetchCardVariants } from './fetchers/fetchCardVariants';
 import { TCardPower } from './fetchers/fetchCardVariants/types';
 import { boardQueryDocument } from './graphql-documents/boardQueryDocument';
+import { checkIsUserCardAvailableForInitialAction } from './helpers/checkIsUserCardAvailableForInitialAction';
 import { Tower } from './Tower';
-import { checkIsAvailableForInitialAction, UserTower } from './UserTower';
+import { UserTower } from './UserTower';
 
 const graphqlClient = createGraphQLClient();
 
@@ -73,7 +74,7 @@ export const Board: FC = () => {
   const checkIsOpenedCardAvailableForAction = (power: TCardPower): boolean => {
     if (board.pulled_card_number_to_change) return false;
     return userCards.some(({ node: card }, index) =>
-      checkIsAvailableForInitialAction(index, card.is_protected, power, userCards)
+      checkIsUserCardAvailableForInitialAction(index, card.is_protected, power, userCards)
     );
   };
 
