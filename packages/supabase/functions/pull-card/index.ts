@@ -39,7 +39,8 @@ Deno.serve(async (req: Request) => {
 
   if (board.opened_card_number_to_use)
     throw new Error('Can not pull card when opened card number has already been set');
-  if (board.pulled_card_number_to_change) throw new Error('Can not pull card when card has already been pulled');
+  if (board.pulled_card_number_to_change)
+    throw new Error('Can not pull card when card has already been pulled from the deck');
 
   const { data: cardsInBoardDeck, error: cardsInBoardDeckError } = await supabaseServiceClient
     .from('card_in_board_deck')

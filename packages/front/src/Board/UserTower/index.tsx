@@ -45,7 +45,6 @@ export const UserTower: FC<{
   });
 
   const handleCardClick = async (index: number, isActionAvailable: boolean): Promise<void> => {
-    if (useSelectedCardMutation.isPending) return;
     if (!isActionAvailable) return;
     if (pulledCardToChange) {
       changeCardToPulledMutation.mutate(index);
@@ -115,26 +114,26 @@ export const UserTower: FC<{
   };
 
   const checkIsAvailableForAction = (index: number, isProtected: boolean): boolean => {
+    if (useSelectedCardMutation.isPending) return false;
     if (pulledCardToChange) return true;
-    if (openedCardToUse) {
-      const selectedOpenedCardPower = cardVariants.get(openedCardToUse)!;
-      const selectedCardIndex = selectedCardIndexAccessor;
-      if (selectedCardIndex === null) {
-        return checkIsUserCardAvailableForInitialAction(index, isProtected, selectedOpenedCardPower, cards);
-      } else {
-        switch (selectedOpenedCardPower) {
-          case 'Protect':
-            return !isProtected && Math.abs(selectedCardIndex - index) === 1;
-          case 'Swap_neighbours':
-            return !isProtected && Math.abs(selectedCardIndex - index) === 1;
-          case 'Swap_through_one':
-            return !isProtected && Math.abs(selectedCardIndex - index) === 2;
-          default:
-            throw new Error(`Action for opened card power "${selectedOpenedCardPower}" can't have second step`);
-        }
+    if (!openedCardToUse) return false;
+
+    const selectedOpenedCardPower = cardVariants.get(openedCardToUse)!;
+    const selectedCardIndex = selectedCardIndexAccessor;
+    if (selectedCardIndex === null) {
+      return checkIsUserCardAvailableForInitialAction(index, isProtected, selectedOpenedCardPower, cards);
+    } else {
+      switch (selectedOpenedCardPower) {
+        case 'Protect':
+          return !isProtected && Math.abs(selectedCardIndex - index) === 1;
+        case 'Swap_neighbours':
+          return !isProtected && Math.abs(selectedCardIndex - index) === 1;
+        case 'Swap_through_one':
+          return !isProtected && Math.abs(selectedCardIndex - index) === 2;
+        default:
+          throw new Error(`Action for opened card power "${selectedOpenedCardPower}" can't have second step`);
       }
     }
-    return false;
   };
 
   return (

@@ -29,6 +29,17 @@ Deno.serve(async (req: Request) => {
   const user = data.user;
   if (!user) throw new Error('User not found');
 
+  const { data: boards, error: boardsError } = await supabaseServiceClient.from('board').select('*').eq('id', boardId);
+  if (boardsError) throw new Error(boardsError.message);
+  const board = boards[0];
+  if (!board) throw new Error('Board not found');
+
+  if (board.turn_user_id !== user.id) throw new Error('Turn user is not current user');
+
+  if (board.pulled_card_number_to_change)
+    throw new Error('Can not select opened card when card has already been pulled from the deck');
+  if (board.opened_card_number_to_use) throw new Error('Opened card number has already been selected');
+
   const { data: cardsInBoardOpened, error: cardsInBoardOpenedError } = await supabaseServiceClient
     .from('card_in_board_opened')
     .select('*')
@@ -40,8 +51,7 @@ Deno.serve(async (req: Request) => {
   const { error: boardUpdateError } = await supabaseServiceClient
     .from('board')
     .update({ opened_card_number_to_use: cardToSelect.card_number })
-    .eq('id', boardId)
-    .eq('turn_user_id', user.id);
+    .eq('id', boardId);
   if (boardUpdateError) throw new Error(boardUpdateError.message);
 
   const { error: cardsInBoardOpenedDeleteError } = await supabaseServiceClient

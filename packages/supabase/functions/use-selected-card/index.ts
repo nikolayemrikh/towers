@@ -35,13 +35,12 @@ Deno.serve(async (req: Request) => {
   const user = data.user;
   if (!user) throw new Error('User not found');
 
-  const { data: boards, error: boardsError } = await supabaseServiceClient
-    .from('board')
-    .select('*')
-    .eq('id', boardId)
-    .eq('turn_user_id', user.id);
+  const { data: boards, error: boardsError } = await supabaseServiceClient.from('board').select('*').eq('id', boardId);
   if (boardsError) throw new Error(boardsError.message);
   const board = boards[0];
+  if (!board) throw new Error('Board not found');
+
+  if (board.turn_user_id !== user.id) throw new Error('Turn user is not current user');
 
   const openedCardNumberToUse = board.opened_card_number_to_use;
   if (!openedCardNumberToUse) throw new Error('No card to use since "opened_card_number_to_use" is not set');
