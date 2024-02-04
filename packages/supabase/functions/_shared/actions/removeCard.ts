@@ -32,7 +32,7 @@ export const removeCard = async (params: {
     // update card in card tower
     const { error: cardInTowerUpdateError } = await supabaseServiceClient
       .from('card_in_tower')
-      .update({ card_number: cardInBoardDeck.card_number })
+      .update({ card_number: cardInBoardDeck.card_number, is_protected: false })
       .eq('id', cardInTowerToUpdate.id);
     if (cardInTowerUpdateError) throw new Error(cardInTowerUpdateError.message);
 

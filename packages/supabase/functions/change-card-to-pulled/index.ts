@@ -60,7 +60,7 @@ Deno.serve(async (req: Request) => {
 
   const { error: cardsInTowersUpdateError } = await supabaseServiceClient
     .from('card_in_tower')
-    .update({ card_number: pulledCardNumberToChange })
+    .update({ card_number: pulledCardNumberToChange, is_protected: false })
     .eq('id', cardToChange.id);
   if (cardsInTowersUpdateError) throw new Error(cardsInTowersUpdateError.message);
 

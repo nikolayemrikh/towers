@@ -11,9 +11,10 @@ import { supabase } from '../supabaseClient';
 
 import { Card } from './Card';
 import { fetchCardVariants } from './fetchers/fetchCardVariants';
+import { TCardPower } from './fetchers/fetchCardVariants/types';
 import { boardQueryDocument } from './graphql-documents/boardQueryDocument';
 import { Tower } from './Tower';
-import { UserTower } from './UserTower';
+import { checkIsAvailableForInitialAction, UserTower } from './UserTower';
 
 const graphqlClient = createGraphQLClient();
 
@@ -68,6 +69,14 @@ export const Board: FC = () => {
 
   const otherTowers = board.card_towerCollection?.edges.filter(({ node }) => node.user_id !== user.id);
 
+  const userCards = userTower.card_in_towerCollection?.edges || [];
+  const checkIsOpenedCardAvailableForAction = (power: TCardPower): boolean => {
+    if (board.pulled_card_number_to_change) return false;
+    return userCards.some(({ node: card }, index) =>
+      checkIsAvailableForInitialAction(index, card.is_protected, power, userCards)
+    );
+  };
+
   return (
     <div style={{ height: '100%', padding: '16px' }}>
       <div>
@@ -97,7 +106,7 @@ export const Board: FC = () => {
             key={openedCard.id}
             number={openedCard.card_number}
             power={cardVariants.get(openedCard.card_number)!}
-            isActionAvailable={!board.pulled_card_number_to_change}
+            isActionAvailable={checkIsOpenedCardAvailableForAction(cardVariants.get(openedCard.card_number)!)}
             isProtected={false}
             onClick={() => {
               if (board.opened_card_number_to_use) return true;
