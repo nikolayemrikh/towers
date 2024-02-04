@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+import { removeCard } from '../_shared/actions/removeCard.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { createDeckFromDiscaredCards } from '../_shared/createDeckFromDiscaredCards.ts';
 import { Database } from '../_shared/database-types.ts';
 import { TUseSelectedCardRequest } from '../_shared/use-selected-card-types.ts';
 
@@ -30,17 +30,6 @@ Deno.serve(async (req: Request) => {
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
-
-  const getCardsFromBoardDeck = async (params: { boardId: number }) => {
-    const { boardId } = params;
-    const { data, error } = await supabaseServiceClient
-      .from('card_in_board_deck')
-      .select('*')
-      .eq('board_id', boardId)
-      .order('id', { ascending: true });
-    if (error) throw new Error(error.message);
-    return data;
-  };
 
   const { data } = await supabaseClient.auth.getUser();
   const user = data.user;
@@ -221,47 +210,17 @@ Deno.serve(async (req: Request) => {
       break;
     }
     case 'Remove_top': {
-      for (const cardTower of cardTowers) {
-        let cardsInBoardDeck = await getCardsFromBoardDeck({ boardId });
-        if (!cardsInBoardDeck.length) {
-          await createDeckFromDiscaredCards({ boardId, cardVariants });
-          cardsInBoardDeck = await getCardsFromBoardDeck({ boardId });
-        }
-        const cardInBoardDeck = cardsInBoardDeck[cardsInBoardDeck.length - 1] as
-          | (typeof cardsInBoardDeck)[0]
-          | undefined;
-
-        if (!cardInBoardDeck) throw new Error('Deck should not be empty');
-
-        const { data: cardsInTower, error: cardsInTowerError } = await supabaseServiceClient
-          .from('card_in_tower')
-          .select('*')
-          .eq('card_tower_id', cardTower.id)
-          .order('id', { ascending: true });
-        if (cardsInTowerError) throw new Error(cardsInTowerError.message);
-
-        const cardInTowerToUpdate = cardsInTower[cardsInTower.length - 1];
-
-        // update card in card tower
-        const { error: cardInTowerUpdateError } = await supabaseServiceClient
-          .from('card_in_tower')
-          .update({ card_number: cardInBoardDeck.card_number })
-          .eq('id', cardInTowerToUpdate.id);
-        if (cardInTowerUpdateError) throw new Error(cardInTowerUpdateError.message);
-
-        // move card from card tower to opened pile
-        const { error: cardInBoardOpenedError } = await supabaseServiceClient
-          .from('card_in_board_opened')
-          .insert({ board_id: boardId, card_number: cardInTowerToUpdate.card_number });
-        if (cardInBoardOpenedError) throw new Error(cardInBoardOpenedError.message);
-      }
+      await removeCard({ cardIndex: cardsInTower.length - 1, boardId, cardTowers, cardVariants });
       break;
     }
-    case 'Remove_middle':
+    case 'Remove_middle': {
+      await removeCard({ cardIndex: (cardsInTower.length - 1) / 2, boardId, cardTowers, cardVariants });
       break;
-    case 'Remove_bottom':
+    }
+    case 'Remove_bottom': {
+      await removeCard({ cardIndex: 0, boardId, cardTowers, cardVariants });
       break;
-
+    }
     default: {
       const unhandledPower: never = resPower;
       throw new Error(`Unhandled power "${unhandledPower}"`);
