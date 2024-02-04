@@ -36,11 +36,11 @@ export const checkIsUserCardAvailableForInitialAction = (
       );
     case 'Move_up_by_two':
       return (
-        !isProtected && (cards[index + 1]?.node.is_protected === false || cards[index + 2]?.node.is_protected === false)
+        !isProtected && cards[index + 1]?.node.is_protected === false && cards[index + 2]?.node.is_protected === false
       );
     case 'Move_down_by_two':
       return (
-        !isProtected && (cards[index - 1]?.node.is_protected === false || cards[index - 2]?.node.is_protected === false)
+        !isProtected && cards[index - 1]?.node.is_protected === false && cards[index - 2]?.node.is_protected === false
       );
     default: {
       const unhandledPower: never = selectedOpenedCardPower;
