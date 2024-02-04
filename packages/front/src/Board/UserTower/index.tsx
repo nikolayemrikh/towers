@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getGraphqlQueryKey } from '../../core/graphql/createGetQueryKet';
 import { supabase } from '../../supabaseClient';
 import { Card } from '../Card';
-import { TCardPower, TCardVariants } from '../fetchers/fetchCardVariants/types';
+import { TCardVariants } from '../fetchers/fetchCardVariants/types';
 import { boardQueryDocument } from '../graphql-documents/boardQueryDocument';
 
 type TN<T> = NonNullable<T>;
@@ -26,7 +26,7 @@ export const UserTower: FC<{
   openedCardToUse: number | null;
   pulledCardToChange: number | null;
 }> = (props) => {
-  const { id, userId, boardId, cards, cardVariants, openedCardToUse, pulledCardToChange } = props;
+  const { id, boardId, cards, cardVariants, openedCardToUse, pulledCardToChange } = props;
   const [selectedCardIndexAccessor, setSelectedCardIndex] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
@@ -112,12 +112,7 @@ export const UserTower: FC<{
     }
   };
 
-  const checkIsAvailableForAction = (
-    number: number,
-    power: TCardPower,
-    index: number,
-    isProtected: boolean
-  ): boolean => {
+  const checkIsAvailableForAction = (index: number, isProtected: boolean): boolean => {
     if (pulledCardToChange) return true;
     if (openedCardToUse) {
       const selectedOpenedCardPower = cardVariants.get(openedCardToUse)!;
@@ -173,12 +168,7 @@ export const UserTower: FC<{
     <div style={{ display: 'flex', 'flexDirection': 'column-reverse', gap: '8px' }}>
       {cards.map((card, index) => {
         const power = cardVariants.get(card.node.card_number)!;
-        const isActionAvailable = checkIsAvailableForAction(
-          card.node.card_number,
-          power,
-          index,
-          card.node.is_protected
-        );
+        const isActionAvailable = checkIsAvailableForAction(index, card.node.is_protected);
         return (
           <Card
             key={card.node.id}
