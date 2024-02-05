@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
 
 import { Navigate, useParams } from 'react-router-dom';
 
@@ -46,6 +46,24 @@ export const Board: FC = () => {
     queryFn: () => graphqlClient.request(boardQueryDocument, { boardId: id }),
     select: (res) => res.boardCollection,
   });
+  const { refetch: refetchBoard } = boardQuery;
+
+  useEffect(() => {
+    const channel = supabase.channel(`board:${id}`);
+    channel
+      .on('broadcast', { event: 'stateChanged' }, () => {
+        console.log(123);
+
+        refetchBoard();
+      })
+      .subscribe((status) => {
+        console.log(status);
+      });
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [id, refetchBoard]);
 
   console.log(getGraphqlQueryKey(boardQueryDocument), id);
 

@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 import { corsHeaders } from '../_shared/cors.ts';
 import { Database } from '../_shared/database-types.ts';
+import { notifyBoardStateChanged } from '../_shared/notifyBoardStateChanged.ts';
 // Follow this setup guide to integrate the Deno language server with your editor:
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.
@@ -65,6 +66,8 @@ Deno.serve(async (req: Request) => {
     .eq('id', boardId);
 
   if (boardUpdateError) throw new Error(boardUpdateError.message);
+
+  await notifyBoardStateChanged(boardId);
 
   return new Response(JSON.stringify({ ok: 123 }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },

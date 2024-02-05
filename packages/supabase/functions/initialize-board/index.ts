@@ -28,7 +28,7 @@ Deno.serve(async (req: Request) => {
     .from('user_in_lobby')
     .select('user_id');
 
-  if (!usersInLobby) throw new Error(usersInLobbySelectError.message);
+  if (usersInLobbySelectError) throw new Error(usersInLobbySelectError.message);
 
   if (!usersInLobby.length) throw new Error('No users in lobby');
 
@@ -88,6 +88,13 @@ Deno.serve(async (req: Request) => {
       .select();
     if (cardInBoardDeckInsertError) throw new Error(cardInBoardDeckInsertError.message);
   }
+
+  const { error: usersInLobbyDeleteError } = await supabaseServiceClient
+    .from('user_in_lobby')
+    .delete()
+    // @TODO fix this hack
+    .neq('id', 321321);
+  if (usersInLobbyDeleteError) throw new Error(usersInLobbyDeleteError.message);
 
   return new Response(JSON.stringify({ newBoard }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },

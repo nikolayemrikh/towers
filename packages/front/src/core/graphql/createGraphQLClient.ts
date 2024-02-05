@@ -2,7 +2,8 @@ import { GraphQLClient } from 'graphql-request';
 
 import { supabase } from '../../supabaseClient';
 
-const url = 'http://localhost:54321/graphql/v1';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const url = `${supabaseUrl}/graphql/v1`;
 
 export const createGraphQLClient = (): GraphQLClient => {
   return new GraphQLClient(url, {

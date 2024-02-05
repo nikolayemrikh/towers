@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { removeCard } from '../_shared/actions/removeCard.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Database } from '../_shared/database-types.ts';
+import { notifyBoardStateChanged } from '../_shared/notifyBoardStateChanged.ts';
 import { TUseSelectedCardRequest } from '../_shared/use-selected-card-types.ts';
 
 // import { TUseSelectedCardRequest } from '../../../shared/src/_supabase/use-selected-card.types.ts';
@@ -232,6 +233,8 @@ Deno.serve(async (req: Request) => {
     .eq('id', boardId)
     .eq('turn_user_id', user.id);
   if (boardUpdateError) throw new Error(boardUpdateError.message);
+
+  await notifyBoardStateChanged(boardId);
 
   return new Response(JSON.stringify({ ok: 123 }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },

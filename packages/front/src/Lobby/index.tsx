@@ -2,6 +2,7 @@ import { FC } from 'react';
 
 import { Link } from 'react-router-dom';
 
+import { getGraphqlQueryKey } from '@front/core/graphql/createGetQueryKet';
 import { createGraphQLClient } from '@front/core/graphql/createGraphQLClient';
 import { EQueryKey } from '@front/core/query-key';
 import { User } from '@supabase/supabase-js';
@@ -27,7 +28,7 @@ export const Lobby: FC = () => {
   });
 
   const { data: userBoards, refetch: refetchUserBoards } = useQuery({
-    queryKey: [EQueryKey.userBoards],
+    queryKey: [getGraphqlQueryKey(cardTowersQueryDocument), user?.id],
     enabled: !!user,
     queryFn: async ({ signal }) => {
       if (!user) throw new Error('User must be defined');

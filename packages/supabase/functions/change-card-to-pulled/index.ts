@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 import { corsHeaders } from '../_shared/cors.ts';
 import { Database } from '../_shared/database-types.ts';
+import { notifyBoardStateChanged } from '../_shared/notifyBoardStateChanged.ts';
 // Follow this setup guide to integrate the Deno language server with your editor:
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.
@@ -14,7 +15,9 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders });
   }
   const authHeader = req.headers.get('Authorization')!;
-  const { boardId, index } = (await req.json()) as { boardId: number; index: number };
+  const res = (await req.json()) as { boardId: number; index: number };
+  const index = res.index;
+  const boardId = Number(res.boardId);
 
   const supabaseClient = createClient<Database>(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
     global: { headers: { Authorization: authHeader } },
@@ -34,7 +37,7 @@ Deno.serve(async (req: Request) => {
     .select('*')
     .eq('board_id', boardId);
   if (cardTowersError) throw new Error(cardTowersError.message);
-  const cardTower = cardTowers[0];
+  const cardTower = cardTowers.find((cardTower) => cardTower.user_id === user.id);
   if (!cardTower) throw new Error('Card tower for current user not found');
 
   const { data: cardsInTower, error: cardsInTowerError } = await supabaseServiceClient
@@ -86,6 +89,8 @@ Deno.serve(async (req: Request) => {
     .update({ turn_user_id: nextUserCardTower.user_id })
     .eq('id', boardId);
   if (boardsUpdateError1) throw new Error(boardsUpdateError1.message);
+
+  await notifyBoardStateChanged(boardId);
 
   return new Response(JSON.stringify({ ok: 123 }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
