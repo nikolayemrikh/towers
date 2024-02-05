@@ -47,6 +47,8 @@ export const Board: FC = () => {
     select: (res) => res.boardCollection,
   });
 
+  console.log(getGraphqlQueryKey(boardQueryDocument), id);
+
   const pullCardMutation = useMutation({
     mutationFn: (boardId: string) => supabase.functions.invoke('pull-card', { body: { boardId } }),
     onSuccess: () => boardQuery.refetch(),

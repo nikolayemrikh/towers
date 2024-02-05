@@ -28,7 +28,7 @@ export const UserTower: FC<{
   openedCardToUse: number | null;
   pulledCardToChange: number | null;
 }> = (props) => {
-  const { id, boardId, userId, turnUserId, cards, cardVariants, openedCardToUse, pulledCardToChange } = props;
+  const { boardId, userId, turnUserId, cards, cardVariants, openedCardToUse, pulledCardToChange } = props;
   const [selectedCardIndexAccessor, setSelectedCardIndex] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
@@ -36,13 +36,13 @@ export const UserTower: FC<{
     mutationFn: (index: number) =>
       supabase.functions.invoke('change-card-to-pulled', { body: { boardId: boardId, index } }),
     onSuccess: () =>
-      queryClient.refetchQueries({ queryKey: [getGraphqlQueryKey(boardQueryDocument), id], exact: true }),
+      queryClient.refetchQueries({ queryKey: [getGraphqlQueryKey(boardQueryDocument), boardId], exact: true }),
   });
 
   const useSelectedCardMutation = useMutation({
     mutationFn: (payload: TUseSelectedCardRequest) => supabase.functions.invoke('use-selected-card', { body: payload }),
     onSuccess: () =>
-      queryClient.refetchQueries({ queryKey: [getGraphqlQueryKey(boardQueryDocument), id], exact: true }),
+      queryClient.refetchQueries({ queryKey: [getGraphqlQueryKey(boardQueryDocument), boardId], exact: true }),
   });
 
   const handleCardClick = async (index: number, isActionAvailable: boolean): Promise<void> => {
