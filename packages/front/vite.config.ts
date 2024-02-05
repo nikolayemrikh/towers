@@ -28,4 +28,14 @@ export default defineConfig({
       return acc;
     }, {}),
   },
+  server: {
+    host: '0.0.0.0',
+    // proxy: {
+    //   '/test': {
+    //     target: 'http://192.168.1.6:54321',
+    //     changeOrigin: true,
+    //     rewrite: (path) => path.replace(/^\/test/, ''),
+    //   },
+    // },
+  },
 });

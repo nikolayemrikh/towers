@@ -32,7 +32,7 @@ node_modules
 
 packages/supabase/.branches
 packages/supabase/.temp/**
-**/.env.*
+**/.env.local
 
 # Logs
 *.log
