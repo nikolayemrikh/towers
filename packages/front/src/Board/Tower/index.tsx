@@ -25,7 +25,7 @@ type TCards = TN<
 export const Tower: FC<{ id: string; userId: string; cards: TCards; cardVariants: TCardVariants }> = (props) => {
   const { id, userId, cards, cardVariants } = props;
   return (
-    <div style={{ display: 'flex', 'flexDirection': 'column' }}>
+    <div style={{ display: 'flex', 'flexDirection': 'column-reverse', gap: '8px' }}>
       {cards.map((card) => {
         return (
           <div key={card.node.id}>

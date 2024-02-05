@@ -84,6 +84,7 @@ export const Board: FC = () => {
         <div>Deck ({board.card_in_board_deckCollection?.edges.length})</div>
         <button
           disabled={
+            board.turn_user_id !== user.id ||
             pullCardMutation.isPending ||
             !board.card_in_board_deckCollection?.edges.length ||
             !!board.pulled_card_number_to_change ||
@@ -142,6 +143,7 @@ export const Board: FC = () => {
         <UserTower
           id={userTower.id}
           boardId={board.id}
+          turnUserId={board.turn_user_id ?? null}
           cards={userTower.card_in_towerCollection?.edges || []}
           userId={user.id}
           cardVariants={cardVariants}

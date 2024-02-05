@@ -22,12 +22,13 @@ export const UserTower: FC<{
   id: string;
   boardId: string;
   userId: string;
+  turnUserId: string | null;
   cards: TCards;
   cardVariants: TCardVariants;
   openedCardToUse: number | null;
   pulledCardToChange: number | null;
 }> = (props) => {
-  const { id, boardId, cards, cardVariants, openedCardToUse, pulledCardToChange } = props;
+  const { id, boardId, userId, turnUserId, cards, cardVariants, openedCardToUse, pulledCardToChange } = props;
   const [selectedCardIndexAccessor, setSelectedCardIndex] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
@@ -115,6 +116,7 @@ export const UserTower: FC<{
 
   const checkIsAvailableForAction = (index: number, isProtected: boolean): boolean => {
     if (useSelectedCardMutation.isPending) return false;
+    if (userId !== turnUserId) return false;
     if (pulledCardToChange) return true;
     if (!openedCardToUse) return false;
 

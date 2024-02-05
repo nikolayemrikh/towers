@@ -76,7 +76,7 @@ export const Lobby: FC = () => {
         )}
       </div>
       <div>
-        {isInLobby && usersInLobby?.length === 1 && (
+        {isInLobby && usersInLobby?.length === 2 && (
           <button disabled={initializeMutation.isPending} onClick={() => initializeMutation.mutate()}>
             Start game
           </button>
@@ -85,10 +85,10 @@ export const Lobby: FC = () => {
       <div>
         <h2>Your boards</h2>
         <div>
-          {userBoards?.map(({ node: board }) => (
-            <div key={board.id}>
-              <Link to={`/board/${board.id}`}>
-                #{board.id} from {new Date(board.created_at).toLocaleString('ru-ru')}
+          {userBoards?.map(({ node: tower }) => (
+            <div key={tower.board.id}>
+              <Link to={`/board/${tower.board.id}`}>
+                #{tower.board.id} from {new Date(tower.board.created_at).toLocaleString('ru-ru')}
               </Link>
             </div>
           ))}

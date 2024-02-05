@@ -32,7 +32,6 @@ Deno.serve(async (req: Request) => {
   const { data: cardTowers, error: cardTowersError } = await supabaseServiceClient
     .from('card_tower')
     .select('*')
-    .eq('user_id', user.id)
     .eq('board_id', boardId);
   if (cardTowersError) throw new Error(cardTowersError.message);
   const cardTower = cardTowers[0];
@@ -47,13 +46,15 @@ Deno.serve(async (req: Request) => {
 
   const cardToChange = cardsInTower[index];
 
-  const { data: boards, error: boardsError } = await supabaseServiceClient
-    .from('board')
-    .select('*')
-    .eq('id', boardId)
-    .eq('turn_user_id', user.id);
+  const { data: boards, error: boardsError } = await supabaseServiceClient.from('board').select('*').eq('id', boardId);
   if (boardsError) throw new Error(boardsError.message);
   const board = boards[0];
+  if (!board) throw new Error('Board not found');
+
+  if (board.turn_user_id !== user.id) throw new Error('Turn user is not current user');
+
+  if (board.opened_card_number_to_use)
+    throw new Error('Can not change card to pulled from the deck when opened card number has already been set');
 
   const pulledCardNumberToChange = board.pulled_card_number_to_change;
   if (!pulledCardNumberToChange) throw new Error('Can not chage card when "pulled_card_number_to_change" is not set');
@@ -74,6 +75,17 @@ Deno.serve(async (req: Request) => {
     .from('card_in_board_opened')
     .insert({ board_id: boardId, card_number: cardToChange.card_number });
   if (cardsInBoardOpenedError) throw new Error(cardsInBoardOpenedError.message);
+
+  // pass a turn to the next user
+  const currentUserCardTowerIndex = cardTowers.findIndex((cardTower) => cardTower.user_id === user.id);
+  const nextUserCardTower =
+    cardTowers[cardTowers.length - 1 === currentUserCardTowerIndex ? 0 : currentUserCardTowerIndex + 1];
+
+  const { error: boardsUpdateError1 } = await supabaseServiceClient
+    .from('board')
+    .update({ turn_user_id: nextUserCardTower.user_id })
+    .eq('id', boardId);
+  if (boardsUpdateError1) throw new Error(boardsUpdateError1.message);
 
   return new Response(JSON.stringify({ ok: 123 }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1,7 +1,10 @@
-import { Link } from 'react-router-dom';
-import { supabase } from '../../supabaseClient';
 import { FC, useState } from 'react';
+
+import { Link } from 'react-router-dom';
+
 import { useMutation } from '@tanstack/react-query';
+
+import { supabase } from '../../supabaseClient';
 
 export const SignUpPage: FC = () => {
   const [email, setEmail] = useState('');
