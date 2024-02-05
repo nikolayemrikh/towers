@@ -72,6 +72,7 @@ export const Board: FC = () => {
 
   const userCards = userTower.card_in_towerCollection?.edges || [];
   const checkIsOpenedCardAvailableForAction = (power: TCardPower): boolean => {
+    if (board.turn_user_id !== user.id) return false;
     if (board.pulled_card_number_to_change) return false;
     return userCards.some(({ node: card }, index) =>
       checkIsUserCardAvailableForInitialAction(index, card.is_protected, power, userCards)
