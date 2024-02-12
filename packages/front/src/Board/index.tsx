@@ -52,13 +52,9 @@ export const Board: FC = () => {
     const channel = supabase.channel(`board:${id}`);
     channel
       .on('broadcast', { event: 'stateChanged' }, () => {
-        console.log(123);
-
         refetchBoard();
       })
-      .subscribe((status) => {
-        console.log(status);
-      });
+      .subscribe();
 
     return () => {
       channel.unsubscribe();
