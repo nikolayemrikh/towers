@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Database } from '../_shared/database-types.ts';
 import { notifyBoardStateChanged } from '../_shared/notifyBoardStateChanged.ts';
+import { passTurnToNextUser } from '../_shared/passTurnToNextUser.ts';
 // Follow this setup guide to integrate the Deno language server with your editor:
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.
@@ -79,16 +80,7 @@ Deno.serve(async (req: Request) => {
     .insert({ board_id: boardId, card_number: cardToChange.card_number });
   if (cardsInBoardOpenedError) throw new Error(cardsInBoardOpenedError.message);
 
-  // pass a turn to the next user
-  const currentUserCardTowerIndex = cardTowers.findIndex((cardTower) => cardTower.user_id === user.id);
-  const nextUserCardTower =
-    cardTowers[cardTowers.length - 1 === currentUserCardTowerIndex ? 0 : currentUserCardTowerIndex + 1];
-
-  const { error: boardsUpdateError1 } = await supabaseServiceClient
-    .from('board')
-    .update({ turn_user_id: nextUserCardTower.user_id })
-    .eq('id', boardId);
-  if (boardsUpdateError1) throw new Error(boardsUpdateError1.message);
+  await passTurnToNextUser(boardId, user.id, cardTowers);
 
   await notifyBoardStateChanged(boardId);
 
