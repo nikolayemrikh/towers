@@ -18,7 +18,7 @@
     "eslint-plugin-react-hooks": "4.6.0",
     "eslint-plugin-react-refresh": "0.4.5",
     "prettier": "3.2.4",
-    "supabase": "1.136.3",
+    "supabase": "1.142.2",
     "typescript": "5.3.3",
     "vite": "5.0.12",
     "vite-plugin-checker": "0.6.4",
